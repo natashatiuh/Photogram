@@ -41,6 +41,11 @@ export class AuthService {
         return wasUserFullNameChanged
     }
 
+    async changeEmail(userId: string, newEmail: string) {
+        const wasEmailChanged = await this.authRepository.changeEmail(userId, newEmail)
+        return wasEmailChanged
+    }
+
     async deleteUser(userId: string) {
         const wasUserDeleted = await this.authRepository.deleteUser(userId)
         return wasUserDeleted
@@ -55,4 +60,5 @@ export class AuthService {
         const wasAvatarDeleted = await this.authRepository.deleteAvatar(userId)
         return wasAvatarDeleted
     }
+
 }

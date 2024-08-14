@@ -113,6 +113,20 @@ describe("Auth Service", () => {
         expect(changedUser.fullName).toEqual("Princess Cinderella")
     })
 
+    test ("email should be changed", async () => {
+        const authService = await createAuthService()
+        const userData = new SignUpUserInput("loona@gmail.com", "12121212", "loona_loona", "Loona", 28)
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        const user = await authService.getUser(userId)
+        await authService.changeEmail(userId, "12loona@gmail.com")
+        const updatedUser = await authService.getUser(userId)
+
+        expect(user.email).toEqual("loona@gmail.com")
+        expect(updatedUser.email).toEqual("12loona@gmail.com")
+    })
+
     test("user should be deleted", async () => {
         const authService = await createAuthService()
         const userData = new SignUpUserInput("lola@gmail.com", "12121212", "lolita", "Lolita Lola", 16)
@@ -174,7 +188,6 @@ describe("Auth Service", () => {
         expect(user.avatar).toEqual("barbara_avatar")
         expect(updatedUser.avatar).toEqual(null)
     })
-
     
 })
 

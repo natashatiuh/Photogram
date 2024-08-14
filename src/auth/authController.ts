@@ -9,10 +9,11 @@ import { signInUserSchema } from "./schemas/signInUserSchema"
 import { changeUserNameSchema } from "./schemas/changeUserNameSchema"
 import { auth } from "../common/middlewares/auth"
 import { MyRequest } from "./requestDefinition"
-import { changeUserFullNameSchema } from "./schemas/changeUserFullName"
+import { changeUserFullNameSchema } from "./schemas/changeUserFullNameSchema"
 import multer from "multer"
 import path from "path"
 import { v4 } from "uuid"
+import { changeEmailSchema } from "./schemas/changeEmailSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -110,6 +111,25 @@ router.patch("/user-full-name", validation(changeUserFullNameSchema), auth(), as
     }
 })
 
+router.patch("/email", validation(changeEmailSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const authRepository = new AuthRepository(connection)
+            const authService = new AuthService(authRepository)
+
+            const { newEmail } = req.body
+            const wasEmailChanged = await authService.changeEmail((req as MyRequest).userId, newEmail)
+            if (!wasEmailChanged) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        res.json({ success: false })
+    }
+})
+
 router.delete("/", auth(), async (req, res) => {
     try {
         await runInTransaction(async (connection) => {
@@ -167,3 +187,5 @@ router.patch("/delete-avatar", auth(), async (req, res) => {
         res.json({ success: false })
     }
 })
+
+

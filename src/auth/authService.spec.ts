@@ -5,6 +5,7 @@ import { pool } from "../common/connection"
 import { AuthRepository } from "./authRepository"
 import { AuthService } from "./authService"
 import { SignUpUserInput } from "./inputs/signUpUserInput"
+import { string } from "joi"
 
 jest.setTimeout(6 * 1000)
 
@@ -156,6 +157,22 @@ describe("Auth Service", () => {
 
         expect(user.avatar).toEqual("shreck_photo")
         expect(updatedUser.avatar).toEqual("shreck_and_fiona")
+    })
+
+    test("avatar should be deleted", async () => {
+        const authService = await createAuthService()
+        const userData = new SignUpUserInput("barbara@gmail.com", "12121212", "barbara26", "Barbara", 26)
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        await authService.addAvatar(userId, "barbara_avatar")
+        const user = await authService.getUser(userId)
+
+        await authService.deleteAvatar(userId)
+        const updatedUser = await authService.getUser(userId)
+        
+        expect(user.avatar).toEqual("barbara_avatar")
+        expect(updatedUser.avatar).toEqual(null)
     })
 
     

@@ -148,3 +148,22 @@ router.patch("/avatar", auth(), upload.single('avatar'), async (req, res) => {
         res.json({ success: false })
     }
 })
+
+router.patch("/delete-avatar", auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const authRepository = new AuthRepository(connection)
+            const authService = new AuthService(authRepository)
+
+            const wasAvatarDeleted = await authService.deleteAvatar((req as MyRequest).userId)
+            if (!wasAvatarDeleted) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})

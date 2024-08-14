@@ -50,4 +50,9 @@ export class AuthService {
         const wasAvatarAdded = await this.authRepository.addAvatar(userId, avatar)
         return wasAvatarAdded
     }
+
+    async deleteAvatar(userId: string) {
+        const wasAvatarDeleted = await this.authRepository.deleteAvatar(userId)
+        return wasAvatarDeleted
+    }
 }

@@ -126,5 +126,20 @@ describe("Auth Service", () => {
         expect(user.userName).toEqual("lolita")
         expect(deletedUser.userName).toEqual(undefined)
     })
+
+    test("avatar should be added", async () => {
+        const authService = await createAuthService()
+        const userData = new SignUpUserInput("daryna@gmail.com", "12345678", "dashunya24", "Daryna", 24)
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        const user = await authService.getUser(userId)
+
+        await authService.addAvatar(userId, "daryna_avatar")
+        const updatedUser = await authService.getUser(userId)
+
+        expect(user.avatar).toEqual(null)
+        expect(updatedUser.avatar).toEqual("daryna_avatar")
+    })
 })
 

@@ -10,6 +10,22 @@ import { changeUserNameSchema } from "./schemas/changeUserNameSchema"
 import { auth } from "../common/middlewares/auth"
 import { MyRequest } from "./requestDefinition"
 import { changeUserFullNameSchema } from "./schemas/changeUserFullName"
+import multer from "multer"
+import path from "path"
+import { v4 } from "uuid"
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "images/avatars")
+    }, 
+    filename: (req, file, cb) => {
+        cb(null, v4() + path.extname(file.originalname))
+    },
+})
+
+const upload = multer({
+    storage: storage
+})
 
 export const router = express.Router()
 
@@ -103,6 +119,26 @@ router.delete("/", auth(), async (req, res) => {
             const wasUserDeleted = await authService.deleteUser((req as MyRequest).userId)
             if(!wasUserDeleted) {
                 res.json({success: false})
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.patch("/avatar", auth(), upload.single('avatar'), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const authRepository = new AuthRepository(connection)
+            const authService = new AuthService(authRepository)
+            
+            const avatar = req.file?.filename 
+            const wasAvatarAdded = await authService.addAvatar((req as MyRequest).userId, avatar)
+            if (!wasAvatarAdded) {
+                res.json({ success: false })
             } else {
                 res.json({ success: true })
             }

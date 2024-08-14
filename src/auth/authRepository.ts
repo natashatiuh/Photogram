@@ -14,9 +14,7 @@ export class AuthRepository {
         }
 
         const startDate = new Date()
-
         const userId = v4()
-
         const hashedPassword = await this.hashPassword(input.password)
         
         const query = `
@@ -24,9 +22,7 @@ export class AuthRepository {
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `
         const params = [userId, input.email, hashedPassword, input.userName, input.fullName, input.age, startDate]
-
         await this.connection.execute(query, params)
-
         return userId
     }
 
@@ -36,21 +32,17 @@ export class AuthRepository {
             WHERE email = ?
         `
         const params = [email]
-
         const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query, params)
-        
         if(rows.length === 0) throw new Error("Incorrect credentials!")
 
         const user = rows[0]
         const hashedPassword = user?.password
-
         if (!hashedPassword) {
             throw new Error("Invalid credentials!")
         }
 
         const isPasswordValid = await this.checkPassword(password, hashedPassword)
         if (!isPasswordValid) throw new Error("Incorrect credentials!")
-
         return user.id
     }
 
@@ -99,12 +91,11 @@ export class AuthRepository {
 
     async getUser(userId: string) {
         const query = `
-            SELECT id, email, password, userName, fullName, age 
+            SELECT id, email, password, userName, fullName, age, avatar 
             FROM users
             WHERE id = ?
         `
         const params = [userId]
-
         const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query, params)
         const userInfo = rows[0]
 
@@ -114,9 +105,9 @@ export class AuthRepository {
             userInfo?.password,
             userInfo?.userName,
             userInfo?.fullName,
-            userInfo?.age
+            userInfo?.age,
+            userInfo?.avatar
         )
-
         return user
     }
 
@@ -157,8 +148,21 @@ export class AuthRepository {
 
         const [rows] = await this.connection.execute(query, params)
         const resultSetHeader = rows as ResultSetHeader
-
         if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async addAvatar(userId: string, avatar?: string) {
+        const query = `
+            UPDATE users
+            SET avatar = ?
+            WHERE id = ?
+        `
+        const params = [avatar, userId]
+
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if(resultSetHeader.affectedRows === 0) return false
         return true
     }
 

@@ -9,6 +9,7 @@ import { signInUserSchema } from "./schemas/signInUserSchema"
 import { changeUserNameSchema } from "./schemas/changeUserNameSchema"
 import { auth } from "../common/middlewares/auth"
 import { MyRequest } from "./requestDefinition"
+import { changeUserFullNameSchema } from "./schemas/changeUserFullName"
 
 export const router = express.Router()
 
@@ -69,5 +70,26 @@ router.patch("/username", validation(changeUserNameSchema), auth(), async (req, 
     } catch (error) {
         console.log(error)
         res.send({ success: false })
+    }
+})
+
+router.patch("/user-full-name", validation(changeUserFullNameSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const authRepository = new AuthRepository(connection)
+            const authService = new AuthService(authRepository)
+
+            const { newUserFullName } = req.body
+            const wasUserFullNameChanged = await authService.changeUserFullName((req as MyRequest).userId, newUserFullName)
+
+            if (!wasUserFullNameChanged) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
     }
 })

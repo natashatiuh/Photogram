@@ -104,5 +104,22 @@ describe("Auth Service", () => {
         expect(user.userName).toEqual("andrew12")
         expect(changedUser.userName).toEqual("andrew_tern")
     })
+
+    test("userFullName should be changed", async () => {
+        const authService = await createAuthService()
+        const userData = new SignUpUserInput("cinderella@gmail.com", "12121212", "cinderella_ella", "Cinderella", 18)
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+
+        const user = await authService.getUser(userId)
+
+        await authService.changeUserFullName(userId, "Princess Cinderella")
+
+        const changedUser = await authService.getUser(userId)
+
+        expect(user.fullName).toEqual("Cinderella")
+        expect(changedUser.fullName).toEqual("Princess Cinderella")
+    })
 })
 

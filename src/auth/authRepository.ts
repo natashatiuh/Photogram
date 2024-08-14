@@ -134,6 +134,20 @@ export class AuthRepository {
         return true
     }
 
+    async changeUserFullName(userId: string, newUserFullName: string) {
+        const query = `
+            UPDATE users
+            SET fullName = ?
+            WHERE id = ?
+        `
+        const params = [newUserFullName, userId]
+
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
 }
 
 interface IGetUserQueryResult extends RowDataPacket {

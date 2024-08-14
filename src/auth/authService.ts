@@ -35,4 +35,9 @@ export class AuthService {
         const wasUserNameChanged = await this.authRepository.changeUserName(userId, newUserName)
         return wasUserNameChanged
     }
+
+    async changeUserFullName(userId: string, newUserFullName: string) {
+        const wasUserFullNameChanged = await this.authRepository.changeUserFullName(userId, newUserFullName)
+        return wasUserFullNameChanged
+    }
 }

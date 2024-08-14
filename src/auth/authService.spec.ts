@@ -31,7 +31,6 @@ describe("Auth Service", () => {
 
         const tokens = await authService.signUpUser(userData)
         const userId = await authService.verifyToken(tokens.accessToken)
-
         const user = await authService.getUser(userId)
 
         expect(user.email).toEqual("marta@gmail.com")
@@ -46,13 +45,10 @@ describe("Auth Service", () => {
 
         const tokens = await authService.signUpUser(userData)
         const userId = await authService.verifyToken(tokens.accessToken)
-        
         const user = await authService.getUser(userId)
-
         if(!user.password) {
             throw new Error("Password should be defined!")
         }
-
         const passwordMatch = await authService.checkPassword(userData.password, user.password)
 
         expect(passwordMatch).toEqual(true)
@@ -71,7 +67,6 @@ describe("Auth Service", () => {
 
         const signUpTokens = await authService.signUpUser(userData)
         const signUpUserId = await authService.verifyToken(signUpTokens.accessToken)
-
         const signInTokens = await authService.signInUser("ariel@gmail.com", "12345678")
         const signInUserId = await authService.verifyToken(signInTokens.accessToken)
 
@@ -82,7 +77,6 @@ describe("Auth Service", () => {
     test("user shouldn't be signed in", async () => {
         const authService = await createAuthService()
         const userData = new SignUpUserInput("monika@gmail.com", "12121212", "monila1999", "Monila Beluchi", 25)
-
         await authService.signUpUser(userData)
 
         expect(authService.signInUser("monika@gmail.com", "121212122")).rejects.toThrow("Incorrect credentials!")
@@ -96,9 +90,7 @@ describe("Auth Service", () => {
         const userId = await authService.verifyToken(tokens.accessToken)
 
         const user = await authService.getUser(userId)
-
         await authService.changeUserName(userId, "andrew_tern")
-
         const changedUser = await authService.getUser(userId)
 
         expect(user.userName).toEqual("andrew12")
@@ -113,13 +105,26 @@ describe("Auth Service", () => {
         const userId = await authService.verifyToken(tokens.accessToken)
 
         const user = await authService.getUser(userId)
-
         await authService.changeUserFullName(userId, "Princess Cinderella")
-
         const changedUser = await authService.getUser(userId)
 
         expect(user.fullName).toEqual("Cinderella")
         expect(changedUser.fullName).toEqual("Princess Cinderella")
+    })
+
+    test("user should be deleted", async () => {
+        const authService = await createAuthService()
+        const userData = new SignUpUserInput("lola@gmail.com", "12121212", "lolita", "Lolita Lola", 16)
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        const user = await authService.getUser(userId)
+
+        await authService.deleteUser(userId)
+        const deletedUser = await authService.getUser(userId)
+
+        expect(user.userName).toEqual("lolita")
+        expect(deletedUser.userName).toEqual(undefined)
     })
 })
 

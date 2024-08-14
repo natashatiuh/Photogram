@@ -148,6 +148,20 @@ export class AuthRepository {
         return true
     }
 
+    async deleteUser(userId: string) {
+        const query = `
+            DELETE FROM users
+            WHERE id = ?
+        `
+        const params = [userId]
+
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
 }
 
 interface IGetUserQueryResult extends RowDataPacket {

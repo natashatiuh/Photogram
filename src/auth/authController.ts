@@ -93,3 +93,22 @@ router.patch("/user-full-name", validation(changeUserFullNameSchema), auth(), as
         res.json({ success: false })
     }
 })
+
+router.delete("/", auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const authRepository = new AuthRepository(connection)
+            const authService = new AuthService(authRepository)
+
+            const wasUserDeleted = await authService.deleteUser((req as MyRequest).userId)
+            if(!wasUserDeleted) {
+                res.json({success: false})
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})

@@ -40,4 +40,9 @@ export class AuthService {
         const wasUserFullNameChanged = await this.authRepository.changeUserFullName(userId, newUserFullName)
         return wasUserFullNameChanged
     }
+
+    async deleteUser(userId: string) {
+        const wasUserDeleted = await this.authRepository.deleteUser(userId)
+        return wasUserDeleted
+    }
 }

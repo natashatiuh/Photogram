@@ -15,6 +15,7 @@ import path from "path"
 import { v4 } from "uuid"
 import { changeEmailSchema } from "./schemas/changeEmailSchema"
 import { changePasswordSchema } from "./schemas/changePasswordSchema"
+import { addUserBioSchema } from "./schemas/addUserBioSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -198,6 +199,26 @@ router.patch("/delete-avatar", auth(), async (req, res) => {
 
             const wasAvatarDeleted = await authService.deleteAvatar((req as MyRequest).userId)
             if (!wasAvatarDeleted) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.patch("/bio", validation(addUserBioSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const authRepository = new AuthRepository(connection)
+            const authService = new AuthService(authRepository)
+
+            const { bio } = req.body
+            const wasBioAdded = await authService.addUserBio((req as MyRequest).userId, bio)
+            if(!wasBioAdded) {
                 res.json({ success: false })
             } else {
                 res.json({ success: true })

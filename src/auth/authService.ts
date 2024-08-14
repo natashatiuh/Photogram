@@ -66,4 +66,9 @@ export class AuthService {
         return wasAvatarDeleted
     }
 
+    async addUserBio(userId: string, bio: string) {
+        const wasBioAdded = await this.authRepository.addUserBio(userId, bio)
+        return wasBioAdded
+    }
+
 }

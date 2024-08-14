@@ -209,6 +209,18 @@ describe("Auth Service", () => {
         expect(user.avatar).toEqual("barbara_avatar")
         expect(updatedUser.avatar).toEqual(null)
     })
+
+    test("bio should be added", async () => {
+        const authService = await createAuthService()
+        const userData = new SignUpUserInput("dora@gmail.com", "12121212", "doradora", "Dora", 21)
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        await authService.addUserBio(userId, "I love to sing songs!")
+        const user = await authService.getUser(userId)
+
+        expect(user.bio).toEqual("I love to sing songs!")
+    })
     
 })
 

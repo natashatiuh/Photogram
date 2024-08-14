@@ -91,7 +91,7 @@ export class AuthRepository {
 
     async getUser(userId: string) {
         const query = `
-            SELECT id, email, password, userName, fullName, age, avatar 
+            SELECT id, email, password, userName, fullName, age, avatar, bio 
             FROM users
             WHERE id = ?
         `
@@ -106,7 +106,8 @@ export class AuthRepository {
             userInfo?.userName,
             userInfo?.fullName,
             userInfo?.age,
-            userInfo?.avatar
+            userInfo?.avatar,
+            userInfo?.bio
         )
         return user
     }
@@ -228,6 +229,20 @@ export class AuthRepository {
         if(resultSetHeader.affectedRows === 0) return false
         return true
     }
+
+    async addUserBio(userId: string, bio: string) {
+        const query = `
+            UPDATE users
+            SET bio = ?
+            WHERE id = ?
+        `
+        const params = [bio, userId]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if(resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
 }
 
 interface IGetUserQueryResult extends RowDataPacket {

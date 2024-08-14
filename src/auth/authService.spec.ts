@@ -87,5 +87,22 @@ describe("Auth Service", () => {
 
         expect(authService.signInUser("monika@gmail.com", "121212122")).rejects.toThrow("Incorrect credentials!")
     })
+
+    test("userName should be changed", async () => {
+        const authService = await createAuthService()
+        const userData = await new SignUpUserInput("andrew#gmail.com", "12121212", "andrew12", "Andrew Tern", 24)
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+
+        const user = await authService.getUser(userId)
+
+        await authService.changeUserName(userId, "andrew_tern")
+
+        const changedUser = await authService.getUser(userId)
+
+        expect(user.userName).toEqual("andrew12")
+        expect(changedUser.userName).toEqual("andrew_tern")
+    })
 })
 

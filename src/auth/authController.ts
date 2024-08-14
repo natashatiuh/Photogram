@@ -6,6 +6,9 @@ import { AuthRepository } from "./authRepository"
 import { AuthService } from "./authService"
 import { SignUpUserInput } from "./inputs/signUpUserInput"
 import { signInUserSchema } from "./schemas/signInUserSchema"
+import { changeUserNameSchema } from "./schemas/changeUserNameSchema"
+import { auth } from "../common/middlewares/auth"
+import { MyRequest } from "./requestDefinition"
 
 export const router = express.Router()
 
@@ -44,5 +47,27 @@ router.get("/sign-in", validation(signInUserSchema), async (req, res) => {
     } catch (error) {
         console.log(error)
         res.json({success: false})
+    }
+})
+
+router.patch("/username", validation(changeUserNameSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const authRepository = new AuthRepository(connection)
+            const authService = new AuthService(authRepository)
+
+            const {  newUserName } = req.body
+            const wasUserNameChanged = await authService.changeUserName((req as MyRequest).userId, newUserName)
+
+            if (!wasUserNameChanged) {
+                res.send({ success: false })
+            } else {
+                res.send({ success : true })
+            }
+
+        })
+    } catch (error) {
+        console.log(error)
+        res.send({ success: false })
     }
 })

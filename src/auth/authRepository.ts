@@ -1,4 +1,4 @@
-import { PoolConnection, RowDataPacket } from "mysql2/promise";
+import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { SignUpUserInput } from "./inputs/signUpUserInput";
 import { v4 } from "uuid"
 import jwt, { JwtPayload, Secret } from "jsonwebtoken"
@@ -118,6 +118,20 @@ export class AuthRepository {
         )
 
         return user
+    }
+
+    async changeUserName(userId: string, newUserName: string) {
+        const query = `
+            UPDATE users 
+            SET userName = ?
+            WHERE id = ?
+        `
+        const params = [newUserName, userId]
+
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
     }
 
 }

@@ -141,5 +141,23 @@ describe("Auth Service", () => {
         expect(user.avatar).toEqual(null)
         expect(updatedUser.avatar).toEqual("daryna_avatar")
     })
+
+    test("avatar should be changed", async () => {
+        const authService = await createAuthService()
+        const userData = new SignUpUserInput("shrek@gmail.com", "12121212", "Shreck", "Shreck Green", 38)
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        await authService.addAvatar(userId, "shreck_photo")
+        const user = await authService.getUser(userId)
+
+        await authService.addAvatar(userId, "shreck_and_fiona")
+        const updatedUser = await authService.getUser(userId)
+
+        expect(user.avatar).toEqual("shreck_photo")
+        expect(updatedUser.avatar).toEqual("shreck_and_fiona")
+    })
+
+    
 })
 

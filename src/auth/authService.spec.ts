@@ -221,6 +221,21 @@ describe("Auth Service", () => {
 
         expect(user.bio).toEqual("I love to sing songs!")
     })
+
+    test("bio should be changed", async () => {
+        const authService = await createAuthService()
+        const userData = new SignUpUserInput("margo@gmail.com", "12121212", "margosha", "Margo Sha", 20)
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        await authService.addUserBio(userId, "I love to watch movies!")
+        const user = await authService.getUser(userId)
+        await authService.addUserBio(userId, "I love my cat!")
+        const updatedUser = await authService.getUser(userId)
+
+        expect(user.bio).toEqual("I love to watch movies!")
+        expect(updatedUser.bio).toEqual("I love my cat!")
+    })
     
 })
 

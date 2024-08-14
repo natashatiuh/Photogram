@@ -83,7 +83,7 @@ describe("Auth Service", () => {
         const authService = await createAuthService()
         const userData = new SignUpUserInput("monika@gmail.com", "12121212", "monila1999", "Monila Beluchi", 25)
 
-        const signUpTokens = await authService.signUpUser(userData)
+        await authService.signUpUser(userData)
 
         expect(authService.signInUser("monika@gmail.com", "121212122")).rejects.toThrow("Incorrect credentials!")
     })

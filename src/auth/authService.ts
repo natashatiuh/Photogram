@@ -46,6 +46,11 @@ export class AuthService {
         return wasEmailChanged
     }
 
+    async changePassword(userId: string, currectPassword: string, newPassword: string) {
+        const wasPasswordChanged = await this.authRepository.changePassword(userId, currectPassword, newPassword)
+        return wasPasswordChanged
+    }
+
     async deleteUser(userId: string) {
         const wasUserDeleted = await this.authRepository.deleteUser(userId)
         return wasUserDeleted

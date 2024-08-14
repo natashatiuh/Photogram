@@ -152,6 +152,42 @@ export class AuthRepository {
         return true
     }
 
+    async changePassword(userId: string, currentPassword: string, newPassword: string) {
+        const query = `
+            SELECT password FROM users 
+            WHERE id = ?
+        ` 
+        const params = [userId]
+        const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query, params)
+
+        if (rows.length === 0) {
+            throw new Error("User not found!")
+        }
+
+        const currentHashedPassword = rows[0]?.password
+
+        if (!currentHashedPassword) {
+            throw new Error("No password found!")
+        }
+
+        const match = await this.checkPassword(currentPassword, currentHashedPassword)
+        if (!match) {
+            throw new Error("Current password is incorrect!")
+        }
+
+        const newHashedPassword = await this.hashPassword(newPassword)
+        const updateQuery = `
+            UPDATE users
+            SET password = ?
+            WHERE id = ? AND password = ?
+        `
+        const updateParams = [newHashedPassword, userId, currentHashedPassword]
+        const [updateRows] = await this.connection.execute(updateQuery,updateParams)
+        const resultSetHeader = updateRows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
     async deleteUser(userId: string) {
         const query = `
             DELETE FROM users

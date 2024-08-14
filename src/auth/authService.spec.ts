@@ -113,7 +113,7 @@ describe("Auth Service", () => {
         expect(changedUser.fullName).toEqual("Princess Cinderella")
     })
 
-    test ("email should be changed", async () => {
+    test("email should be changed", async () => {
         const authService = await createAuthService()
         const userData = new SignUpUserInput("loona@gmail.com", "12121212", "loona_loona", "Loona", 28)
 
@@ -125,6 +125,27 @@ describe("Auth Service", () => {
 
         expect(user.email).toEqual("loona@gmail.com")
         expect(updatedUser.email).toEqual("12loona@gmail.com")
+    })
+
+    test("password should be changed", async () => {
+        const authService = await createAuthService()
+        const userData = new SignUpUserInput("micky@gmail.com", "12121212", "micky123", "MickyMouse", 14)
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        const user = await authService.getUser(userId)
+        await authService.changePassword(userId, "12121212", "11111111")    
+        const updatedUser = await authService.getUser(userId)
+
+        if (!updatedUser.password) {
+            throw new Error("Undefined user password!")
+        }
+
+        const isOldPasswordMatch = await authService.checkPassword("12121212", updatedUser.password)
+        const isNewPasswordMatch = await authService.checkPassword("11111111", updatedUser.password)
+
+        expect(isOldPasswordMatch).toBe(false)
+        expect(isNewPasswordMatch).toBe(true)
     })
 
     test("user should be deleted", async () => {

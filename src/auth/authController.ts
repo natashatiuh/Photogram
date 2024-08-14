@@ -14,6 +14,7 @@ import multer from "multer"
 import path from "path"
 import { v4 } from "uuid"
 import { changeEmailSchema } from "./schemas/changeEmailSchema"
+import { changePasswordSchema } from "./schemas/changePasswordSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -126,6 +127,26 @@ router.patch("/email", validation(changeEmailSchema), auth(), async (req, res) =
             }
         })
     } catch (error) {
+        res.json({ success: false })
+    }
+})
+
+router.patch("/password", validation(changePasswordSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const authRepository = new AuthRepository(connection)
+            const authService = new AuthService(authRepository)
+
+            const { currectPassword, newPassword } = req.body
+            const wasPasswordChanged = await authService.changePassword((req as MyRequest).userId, currectPassword, newPassword)
+            if(!wasPasswordChanged) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error)
         res.json({ success: false })
     }
 })

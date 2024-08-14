@@ -230,4 +230,23 @@ router.patch("/bio", validation(addUserBioSchema), auth(), async (req, res) => {
     }
 })
 
+router.patch("/delete-bio", auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const authRepository = new AuthRepository(connection)
+            const authService = new AuthService(authRepository)
+
+            const wasBioDeleted = await authService.deleteUserBio((req as MyRequest).userId)
+            if (!wasBioDeleted) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error) 
+        res.json({ success: false })
+    }
+})
+
 

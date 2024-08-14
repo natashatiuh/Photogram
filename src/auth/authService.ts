@@ -71,4 +71,9 @@ export class AuthService {
         return wasBioAdded
     }
 
+    async deleteUserBio(userId: string) {
+        const wasBioDeleted = await this.authRepository.deleteUserBio(userId)
+        return wasBioDeleted
+    }
+
 }

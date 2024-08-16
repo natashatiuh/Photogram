@@ -1,15 +1,17 @@
 export class UserEntity {
-    userId?: string
-    email?: string
-    password?: string
-    userName?: string
-    fullName?: string
-    age?: number
-    avatar?: string
-    bio?: string
+    id: string
+    email: string
+    password: string
+    userName: string
+    fullName: string
+    age: number
+    avatar: string
+    bio: string
+    followers: string
+    following: string
 
-    constructor(userId?: string, email?: string, password?: string, userName?: string, fullName?: string, age?: number, avatar?: string, bio?: string) {
-        this.userId = userId
+    constructor(id: string, email: string, password: string, userName: string, fullName: string, age: number, avatar: string, bio: string, followers: string, following: string) {
+        this.id = id
         this.email = email
         this.password = password
         this.userName = userName
@@ -17,5 +19,7 @@ export class UserEntity {
         this.age = age
         this.avatar = avatar
         this.bio = bio
+        this.followers = followers
+        this.following = following
     }
 }

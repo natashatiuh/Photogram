@@ -16,6 +16,7 @@ import { v4 } from "uuid"
 import { changeEmailSchema } from "./schemas/changeEmailSchema"
 import { changePasswordSchema } from "./schemas/changePasswordSchema"
 import { addUserBioSchema } from "./schemas/addUserBioSchema"
+import { followUserSchema } from "./schemas/followUserSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -245,6 +246,26 @@ router.patch("/delete-bio", auth(), async (req, res) => {
         })
     } catch (error) {
         console.log(error) 
+        res.json({ success: false })
+    }
+})
+
+router.patch("/follow", validation(followUserSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const authRepository = new AuthRepository(connection)
+            const authService = new AuthService(authRepository)
+
+            const { userToFollow } = req.body
+            const wasFollowingOkay = await authService.followUser((req as MyRequest).userId, userToFollow)
+            if (!wasFollowingOkay) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error)
         res.json({ success: false })
     }
 })

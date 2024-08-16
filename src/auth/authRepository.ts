@@ -18,10 +18,10 @@ export class AuthRepository {
         const hashedPassword = await this.hashPassword(input.password)
         
         const query = `
-            INSERT INTO users (id, email, password, userName, fullName, age, dateOfRegistration) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO users (id, email, password, userName, fullName, age, followers, following, dateOfRegistration) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
-        const params = [userId, input.email, hashedPassword, input.userName, input.fullName, input.age, startDate]
+        const params = [userId, input.email, hashedPassword, input.userName, input.fullName, input.age, 0, 0, startDate]
         await this.connection.execute(query, params)
         return userId
     }
@@ -91,23 +91,28 @@ export class AuthRepository {
 
     async getUser(userId: string) {
         const query = `
-            SELECT id, email, password, userName, fullName, age, avatar, bio 
+            SELECT id, email, password, userName, fullName, age, avatar, bio, followers, following 
             FROM users
             WHERE id = ?
         `
         const params = [userId]
         const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query, params)
         const userInfo = rows[0]
+        if (!userInfo) {
+            throw new Error("User doesn't exist!")
+        }
 
         const user = new UserEntity(
-            userInfo?.userId,
-            userInfo?.email,
-            userInfo?.password,
-            userInfo?.userName,
-            userInfo?.fullName,
-            userInfo?.age,
-            userInfo?.avatar,
-            userInfo?.bio
+            userInfo.id,
+            userInfo.email,
+            userInfo.password,
+            userInfo.userName,
+            userInfo.fullName,
+            userInfo.age,
+            userInfo.avatar,
+            userInfo.bio,
+            userInfo.followers,
+            userInfo.following
         )
         return user
     }
@@ -256,6 +261,76 @@ export class AuthRepository {
         return true
     }
 
+    //if user want to follow another user he use this function
+    async followUser(followerId?: string, followedId?: string) {
+        if (!followerId || !followedId) {
+            throw new Error("UserId or UserToFollow is undefined!")
+        }
+        const checkFollowing = await this.checkFollowing(followerId, followedId)
+        if (!checkFollowing) {
+            throw new Error ("The user is already followed!")
+        }
+        const addNewFollowing = await this.addFollowing(followerId) //the user got +1 following
+        const addNewFollower = await this.addFollower(followedId) //the userToFollow got +1 follower
+        if (addNewFollowing && addNewFollower === false) return false
+        await this.addToFollows(followerId, followedId)
+        return true
+    }
+
+    async addFollower(userId?: string) {
+        if (!userId) throw new Error("User is undefined!")
+
+        const query = `
+            UPDATE users
+            SET followers = followers + 1
+            WHERE id = ?
+        `
+        const params = [userId]
+
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async addFollowing(userId?: string) {
+        if (!userId) throw new Error("User is undefined!")
+
+        const query = `
+            UPDATE users
+            SET following = following + 1
+            WHERE id = ?
+        `
+        const params = [userId]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async checkFollowing(followerId: string, followedId: string) {
+        const query = `
+            SELECT followerId, followedId
+            FROM follows
+            WHERE followerId = ? AND followedId = ?
+        `
+        const params = [followerId, followedId] 
+        const [rows] = await this.connection.execute<IGetFollowsQueryResult[]>(query, params)
+        if(rows.length > 0) return false
+        return true
+    }
+
+    async addToFollows(followerId: string, followedId: string) {
+        const currentDate = new Date()
+
+        const query = `
+            INSERT INTO follows (followerId, followedId, followDate)
+            VALUES (?, ?, ?)
+        `
+        const params = [followerId, followedId, currentDate]
+        await this.connection.execute(query, params)
+    }
+
 }
 
 interface IGetUserQueryResult extends RowDataPacket {
@@ -267,9 +342,8 @@ interface IGetUserQueryResult extends RowDataPacket {
     age: number
 }
 
-interface TokenCredentials {
-    accessToken: string,
-    refreshToken: string,
-    expireTime: Date,
-    userId: string
+interface IGetFollowsQueryResult extends RowDataPacket {
+    followerId: string,
+    followedId: string
 }
+

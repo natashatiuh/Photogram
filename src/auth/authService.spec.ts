@@ -47,9 +47,6 @@ describe("Auth Service", () => {
         const tokens = await authService.signUpUser(userData)
         const userId = await authService.verifyToken(tokens.accessToken)
         const user = await authService.getUser(userId)
-        if(!user.password) {
-            throw new Error("Password should be defined!")
-        }
         const passwordMatch = await authService.checkPassword(userData.password, user.password)
 
         expect(passwordMatch).toEqual(true)
@@ -133,13 +130,8 @@ describe("Auth Service", () => {
 
         const tokens = await authService.signUpUser(userData)
         const userId = await authService.verifyToken(tokens.accessToken)
-        const user = await authService.getUser(userId)
         await authService.changePassword(userId, "12121212", "11111111")    
         const updatedUser = await authService.getUser(userId)
-
-        if (!updatedUser.password) {
-            throw new Error("Undefined user password!")
-        }
 
         const isOldPasswordMatch = await authService.checkPassword("12121212", updatedUser.password)
         const isNewPasswordMatch = await authService.checkPassword("11111111", updatedUser.password)
@@ -155,12 +147,10 @@ describe("Auth Service", () => {
         const tokens = await authService.signUpUser(userData)
         const userId = await authService.verifyToken(tokens.accessToken)
         const user = await authService.getUser(userId)
-
         await authService.deleteUser(userId)
-        const deletedUser = await authService.getUser(userId)
-
+    
         expect(user.userName).toEqual("lolita")
-        expect(deletedUser.userName).toEqual(undefined)
+        expect(authService.getUser(userId)).rejects.toThrow("User doesn't exist!")
     })
 
     test("avatar should be added", async () => {
@@ -250,6 +240,23 @@ describe("Auth Service", () => {
 
         expect(user.bio).toEqual("I love Silva!")
         expect(updatedUser.bio).toEqual(null)
+    })
+
+    test("user should have a follower and another user should have a following", async () => {
+        const authService = await createAuthService()
+        const userData1 = new SignUpUserInput("kim@gmail.com", "12121212", "kimberly", "Kimberly", 43)
+        const userData2 = new SignUpUserInput("kylie@gmail.com", "12121212", "kylie", "Kylie", 27)
+
+        const tokens1 = await authService.signUpUser(userData1)
+        const tokens2 = await authService.signUpUser(userData2)
+        const userId1 = await authService.verifyToken(tokens1.accessToken)
+        const userId2 = await authService.verifyToken(tokens2.accessToken)
+        await authService.followUser(userId1, userId2)
+        const user1 = await authService.getUser(userId1)
+        const user2 = await authService.getUser(userId2)
+        console.log(user1)
+        expect(user1.following).toEqual(1)
+        expect(user2.followers).toEqual(1)
     })
     
 })

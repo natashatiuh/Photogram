@@ -1,5 +1,5 @@
 import joi from "joi"
 
-export const followUserSchema = joi.object({
+export const unfollowUserSchema = joi.object({
     followedId: joi.string().required()
 })

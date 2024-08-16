@@ -254,9 +254,31 @@ describe("Auth Service", () => {
         await authService.followUser(userId1, userId2)
         const user1 = await authService.getUser(userId1)
         const user2 = await authService.getUser(userId2)
-        console.log(user1)
+    
         expect(user1.following).toEqual(1)
         expect(user2.followers).toEqual(1)
+    })
+
+    test("user should be unfollowed", async () => {
+        const authService = await createAuthService()
+        const userData1 = new SignUpUserInput("henry@gmail.com", "12121212", "henry", "Henry", 56)
+        const userData2 = new SignUpUserInput("taras@gmail.com", "12121212", "taras12", "Taras", 43)
+
+        const tokens1 = await authService.signUpUser(userData1)
+        const tokens2 = await authService.signUpUser(userData2)
+        const userId1 = await authService.verifyToken(tokens1.accessToken)
+        const userId2 = await authService.verifyToken(tokens2.accessToken)
+        await authService.followUser(userId1, userId2)
+        const user1 = await authService.getUser(userId1)
+        const user2 = await authService.getUser(userId2)
+        await authService.unfollowUser(userId1, userId2)
+        const updatedUser1 = await authService.getUser(userId1)
+        const updatedUser2 = await authService.getUser(userId2)
+
+        expect(user1.following).toEqual(1)
+        expect(updatedUser1.following).toEqual(0)
+        expect(user2.followers).toEqual(1)
+        expect(updatedUser2.followers).toEqual(0)
     })
     
 })

@@ -262,12 +262,9 @@ export class AuthRepository {
     }
 
     //if user want to follow another user he use this function
-    async followUser(followerId?: string, followedId?: string) {
-        if (!followerId || !followedId) {
-            throw new Error("UserId or UserToFollow is undefined!")
-        }
+    async followUser(followerId: string, followedId: string) {
         const checkFollowing = await this.checkFollowing(followerId, followedId)
-        if (!checkFollowing) {
+        if (checkFollowing === "follow exists") {
             throw new Error ("The user is already followed!")
         }
         const addNewFollowing = await this.addFollowing(followerId) //the user got +1 following
@@ -277,7 +274,7 @@ export class AuthRepository {
         return true
     }
 
-    async addFollower(userId?: string) {
+    async addFollower(userId: string) {
         if (!userId) throw new Error("User is undefined!")
 
         const query = `
@@ -293,7 +290,7 @@ export class AuthRepository {
         return true
     }
 
-    async addFollowing(userId?: string) {
+    async addFollowing(userId: string) {
         if (!userId) throw new Error("User is undefined!")
 
         const query = `
@@ -316,8 +313,9 @@ export class AuthRepository {
         `
         const params = [followerId, followedId] 
         const [rows] = await this.connection.execute<IGetFollowsQueryResult[]>(query, params)
-        if(rows.length > 0) return false
-        return true
+        let result = "new follow"
+        if(rows.length > 0) result = "follow exists"
+        return result
     }
 
     async addToFollows(followerId: string, followedId: string) {
@@ -329,6 +327,58 @@ export class AuthRepository {
         `
         const params = [followerId, followedId, currentDate]
         await this.connection.execute(query, params)
+    }
+
+    async unfollowUser(followerId: string, followedId: string) {
+        const checkFollowing = await this.checkFollowing(followerId, followedId)
+        if (checkFollowing === "new follow") {
+            throw new Error("The user wasn't followed!")
+        }
+
+        const deleteFollowing = await this.deleteFollowing(followerId) //the user got -1 following
+        const deleteFollower = await this.deleteFollower(followedId) //the userToFollow got -1 follower
+        if (deleteFollowing && deleteFollower === false) return false
+        await this.deleteFromFollows(followerId, followedId)
+        return true
+
+    }
+
+    async deleteFollower(userId: string) {
+        const query = `
+            UPDATE users
+            SET followers = followers - 1
+            WHERE id = ?
+        `
+        const params = [userId]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async deleteFollowing(userId: string) {
+        const query = `
+            UPDATE users
+            SET following = following - 1
+            WHERE id = ?
+        `
+        const params = [userId]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async deleteFromFollows(followerId: string, followedId: string) {
+        const query = `
+            DELETE FROM follows
+            WHERE followerId = ? AND followedId = ?
+        `
+        const params = [followerId, followedId]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
     }
 
 }

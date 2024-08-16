@@ -76,9 +76,14 @@ export class AuthService {
         return wasBioDeleted
     }
 
-    async followUser(followerId?: string, followedId?: string) {
+    async followUser(followerId: string, followedId: string) {
         const wasFollowingOkay = await this.authRepository.followUser(followerId, followedId)
         return wasFollowingOkay
+    }
+
+    async unfollowUser(followerId: string, followedId: string) {
+        const wasUnfollowingOkay = await this.authRepository.unfollowUser(followerId, followedId)
+        return wasUnfollowingOkay
     }
 
 }

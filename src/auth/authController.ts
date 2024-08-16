@@ -17,6 +17,7 @@ import { changeEmailSchema } from "./schemas/changeEmailSchema"
 import { changePasswordSchema } from "./schemas/changePasswordSchema"
 import { addUserBioSchema } from "./schemas/addUserBioSchema"
 import { followUserSchema } from "./schemas/followUserSchema"
+import { unfollowUserSchema } from "./schemas/unfollowUserSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -256,8 +257,8 @@ router.patch("/follow", validation(followUserSchema), auth(), async (req, res) =
             const authRepository = new AuthRepository(connection)
             const authService = new AuthService(authRepository)
 
-            const { userToFollow } = req.body
-            const wasFollowingOkay = await authService.followUser((req as MyRequest).userId, userToFollow)
+            const { followedId } = req.body
+            const wasFollowingOkay = await authService.followUser((req as MyRequest).userId, followedId)
             if (!wasFollowingOkay) {
                 res.json({ success: false })
             } else {
@@ -266,6 +267,26 @@ router.patch("/follow", validation(followUserSchema), auth(), async (req, res) =
         })
     } catch (error) {
         console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.patch("/unfollow", validation(unfollowUserSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const authRepository = new AuthRepository(connection)
+            const authService = new AuthService(authRepository)
+
+            const { followedId } = req.body
+            const wasUnfollowingOkay = await authService.unfollowUser((req as MyRequest).userId, followedId)
+            if (!wasUnfollowingOkay) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error) 
         res.json({ success: false })
     }
 })

@@ -26,8 +26,13 @@ export class AuthService {
         return match
     }
 
-    async getUser(userId: string) {
-        const user = await this.authRepository.getUser(userId)
+    async getAuthCredentials(userId: string) {
+        const auth_credentials = await this.authRepository.getAuthCredentials(userId)
+        return auth_credentials
+    }
+
+    async getUserInfo(userId: string) {
+        const user = await this.authRepository.getUserInfo(userId)
         return user
     }
 

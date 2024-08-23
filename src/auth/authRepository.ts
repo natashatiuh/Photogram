@@ -4,57 +4,59 @@ import { v4 } from "uuid"
 import jwt, { JwtPayload, Secret } from "jsonwebtoken"
 import bcrypt, { hash } from "bcrypt"
 import { UserEntity } from "./entity/userEntity";
+import { AuthCredentialsEntity } from "./entity/authCredentialsEntity";
 
 export class AuthRepository {
     constructor(private connection: PoolConnection) {}
 
     async signUpUser(input: SignUpUserInput) {
-        if (input.age < 13) {
+        const userId = v4()
+        const userAge = await this.getUserAge(input.dateOfBirth)
+        if (userAge < 13) {
             throw new Error("User must be at least 13 years old to sign up.")
         }
+        await this.addAuthCredentials(userId, input)
+        await this.addUserInfo(userId, input)
 
-        const startDate = new Date()
-        const userId = v4()
-        const hashedPassword = await this.hashPassword(input.password)
-        
-        const query = `
-            INSERT INTO users (id, email, password, userName, fullName, age, followers, following, dateOfRegistration) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `
-        const params = [userId, input.email, hashedPassword, input.userName, input.fullName, input.age, 0, 0, startDate]
-        await this.connection.execute(query, params)
         return userId
     }
 
-    async signInUser(email: string, password: string) {
-        const query = `
-            SELECT id, password FROM users
-            WHERE email = ?
-        `
-        const params = [email]
-        const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query, params)
-        if(rows.length === 0) throw new Error("Incorrect credentials!")
+    async getUserAge(dateOfBirth: Date) {
+        const today = new Date()
+        let age = today.getFullYear() - dateOfBirth.getFullYear()
+        const monthDifference = today.getMonth() - dateOfBirth.getMonth()
 
-        const user = rows[0]
-        const hashedPassword = user?.password
-        if (!hashedPassword) {
-            throw new Error("Invalid credentials!")
+        if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < dateOfBirth.getDate())) {
+            age--
         }
 
-        const isPasswordValid = await this.checkPassword(password, hashedPassword)
-        if (!isPasswordValid) throw new Error("Incorrect credentials!")
-        return user.id
+        return age
     }
 
-    async generateToken(userId: string, expiration: Date) {
-        const claims = {
-            userId: userId,
-            exp: Math.floor(expiration.getTime() / 1000)
-        }
+    async addAuthCredentials(userId: string, input: SignUpUserInput) {
+        const startDate = new Date()
+        const hashedPassword = await this.hashPassword(input.password)
+        const query = `
+            INSERT INTO auth_credentials (userId, email, password, dateOfRegistration)
+            VALUES (?, ?, ?, ?)
+        `
+        const params = [userId, input.email, hashedPassword, startDate]
+        await this.connection.execute(query, params)
+    }
 
-        const secretKey = process.env.SECRET_KEY as Secret
-        const token = jwt.sign(claims, secretKey, {algorithm: 'HS256'})
-        return token
+    async addUserInfo(userId: string, input: SignUpUserInput) {
+        const query = `
+            INSERT INTO users (id, userName, fullName, dateOfBirth, followers, followings, posts)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `
+        const params = [userId, input.userName, input.fullName, input.dateOfBirth, 0, 0, 0]
+        await this.connection.execute(query, params)
+    }
+
+    async hashPassword(plainPassword: string) {
+        const saltRounds = 10
+        const hash = bcrypt.hash(plainPassword, saltRounds)
+        return hash
     }
 
     async generateTokenS(userId: string) {
@@ -72,16 +74,41 @@ export class AuthRepository {
         }
     }
 
+    async generateToken(userId: string, expiration: Date) {
+        const claims = {
+            userId: userId,
+            exp: Math.floor(expiration.getTime() / 1000)
+        }
+
+        const secretKey = process.env.SECRET_KEY as Secret
+        const token = jwt.sign(claims, secretKey, {algorithm: 'HS256'})
+        return token
+    }
+
     async verifyToken(accessToken: string) {
         const secretKey = process.env.SECRET_KEY as Secret
         const tokenInfo = jwt.verify(accessToken, secretKey) as JwtPayload
         return tokenInfo.userId
     }
 
-    async hashPassword(plainPassword: string) {
-        const saltRounds = 10
-        const hash = bcrypt.hash(plainPassword, saltRounds)
-        return hash
+    async signInUser(email: string, password: string) {
+        const query = `
+            SELECT userId, password FROM auth_credentials
+            WHERE email = ?
+        `
+        const params = [email]
+        const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query, params)
+        if(rows.length === 0) throw new Error("Incorrect credentials!")
+
+        const user = rows[0]
+        const hashedPassword = user?.password
+        if (!hashedPassword) {
+            throw new Error("Invalid credentials!")
+        }
+
+        const isPasswordValid = await this.checkPassword(password, hashedPassword)
+        if (!isPasswordValid) throw new Error("Incorrect credentials!")
+        return user.userId
     }
 
     async checkPassword(plainPassword: string, hashedPassword: string) {
@@ -89,33 +116,109 @@ export class AuthRepository {
         return match
     }
 
-    async getUser(userId: string) {
+    async changeEmail(userId: string, newEmail: string) {
         const query = `
-            SELECT id, email, password, userName, fullName, age, avatar, bio, followers, following 
-            FROM users
+            UPDATE auth_credentials
+            SET email = ?
+            WHERE userId = ? 
+        `
+        const params = [newEmail, userId]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async changePassword(userId: string, currentPassword: string, newPassword: string) {
+        const query = `
+            SELECT password FROM auth_credentials 
+            WHERE userId = ?
+        ` 
+        const params = [userId]
+        const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query, params)
+
+        if (rows.length === 0) {
+            throw new Error("User not found!")
+        }
+
+        const currentHashedPassword = rows[0]?.password
+
+        if (!currentHashedPassword) {
+            throw new Error("No password found!")
+        }
+
+        const match = await this.checkPassword(currentPassword, currentHashedPassword)
+        if (!match) {
+            throw new Error("Current password is incorrect!")
+        }
+
+        const newHashedPassword = await this.hashPassword(newPassword)
+        const updateQuery = `
+            UPDATE auth_credentials
+            SET password = ?
+            WHERE userId = ? AND password = ?
+        `
+        const updateParams = [newHashedPassword, userId, currentHashedPassword]
+        const [updateRows] = await this.connection.execute(updateQuery,updateParams)
+        const resultSetHeader = updateRows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async deleteUser(userId: string) {
+        const deletedAuthCredentials = await this.deleteAuthCredentials(userId)
+        const deletedUserInfo = await this.deleteUserInfo(userId)
+        if (deletedAuthCredentials && deletedUserInfo === false) return false
+        return true
+    }
+
+    async deleteAuthCredentials(userId: string) {
+        const query = `
+            DELETE FROM auth_credentials
+            WHERE userId = ?
+        `
+        const params = [userId]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async deleteUserInfo(userId: string) {
+        const query = `
+            DELETE FROM users
             WHERE id = ?
         `
         const params = [userId]
-        const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query, params)
-        const userInfo = rows[0]
-        if (!userInfo) {
-            throw new Error("User doesn't exist!")
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async getAuthCredentials(userId: string) {
+        const query = `
+            SELECT userId, email, password
+            FROM auth_credentials
+            WHERE userId = ?
+        `
+        const params = [userId]
+        const [rows] = await this.connection.execute<IGetFollowsQueryResult[]>(query, params)
+        const authCredentialsInfo = rows[0]
+        if (!authCredentialsInfo) {
+            throw new Error("Auth Credentials don't exist!")
         }
 
-        const user = new UserEntity(
-            userInfo.id,
-            userInfo.email,
-            userInfo.password,
-            userInfo.userName,
-            userInfo.fullName,
-            userInfo.age,
-            userInfo.avatar,
-            userInfo.bio,
-            userInfo.followers,
-            userInfo.following
+        const authCredentials = new AuthCredentialsEntity(
+            authCredentialsInfo.userId,
+            authCredentialsInfo.email,
+            authCredentialsInfo.password
         )
-        return user
+
+        return authCredentials
     }
+
+    ///////FUNCTION WHICH SHOULD BE IN SEPARATE FOLDER///////
 
     async changeUserName(userId: string, newUserName: string) {
         const query = `
@@ -138,68 +241,6 @@ export class AuthRepository {
             WHERE id = ?
         `
         const params = [newUserFullName, userId]
-
-        const [rows] = await this.connection.execute(query, params)
-        const resultSetHeader = rows as ResultSetHeader
-        if (resultSetHeader.affectedRows === 0) return false
-        return true
-    }
-
-    async changeEmail(userId: string, newEmail: string) {
-        const query = `
-            UPDATE users
-            SET email = ?
-            WHERE id = ? 
-        `
-        const params = [newEmail, userId]
-        const [rows] = await this.connection.execute(query, params)
-        const resultSetHeader = rows as ResultSetHeader
-        if (resultSetHeader.affectedRows === 0) return false
-        return true
-    }
-
-    async changePassword(userId: string, currentPassword: string, newPassword: string) {
-        const query = `
-            SELECT password FROM users 
-            WHERE id = ?
-        ` 
-        const params = [userId]
-        const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query, params)
-
-        if (rows.length === 0) {
-            throw new Error("User not found!")
-        }
-
-        const currentHashedPassword = rows[0]?.password
-
-        if (!currentHashedPassword) {
-            throw new Error("No password found!")
-        }
-
-        const match = await this.checkPassword(currentPassword, currentHashedPassword)
-        if (!match) {
-            throw new Error("Current password is incorrect!")
-        }
-
-        const newHashedPassword = await this.hashPassword(newPassword)
-        const updateQuery = `
-            UPDATE users
-            SET password = ?
-            WHERE id = ? AND password = ?
-        `
-        const updateParams = [newHashedPassword, userId, currentHashedPassword]
-        const [updateRows] = await this.connection.execute(updateQuery,updateParams)
-        const resultSetHeader = updateRows as ResultSetHeader
-        if (resultSetHeader.affectedRows === 0) return false
-        return true
-    }
-
-    async deleteUser(userId: string) {
-        const query = `
-            DELETE FROM users
-            WHERE id = ?
-        `
-        const params = [userId]
 
         const [rows] = await this.connection.execute(query, params)
         const resultSetHeader = rows as ResultSetHeader
@@ -263,14 +304,14 @@ export class AuthRepository {
 
     //if user want to follow another user he use this function
     async followUser(followerId: string, followedId: string) {
-        const checkFollowing = await this.checkFollowing(followerId, followedId)
+        const checkFollowing = await this.checkIfFollowingExists(followerId, followedId)
         if (checkFollowing === "follow exists") {
             throw new Error ("The user is already followed!")
         }
         const addNewFollowing = await this.addFollowing(followerId) //the user got +1 following
         const addNewFollower = await this.addFollower(followedId) //the userToFollow got +1 follower
         if (addNewFollowing && addNewFollower === false) return false
-        await this.addToFollows(followerId, followedId)
+        await this.addToFollowsTable(followerId, followedId)
         return true
     }
 
@@ -295,7 +336,7 @@ export class AuthRepository {
 
         const query = `
             UPDATE users
-            SET following = following + 1
+            SET followings = followings + 1
             WHERE id = ?
         `
         const params = [userId]
@@ -305,7 +346,7 @@ export class AuthRepository {
         return true
     }
 
-    async checkFollowing(followerId: string, followedId: string) {
+    async checkIfFollowingExists(followerId: string, followedId: string) {
         const query = `
             SELECT followerId, followedId
             FROM follows
@@ -318,7 +359,7 @@ export class AuthRepository {
         return result
     }
 
-    async addToFollows(followerId: string, followedId: string) {
+    async addToFollowsTable(followerId: string, followedId: string) {
         const currentDate = new Date()
 
         const query = `
@@ -330,7 +371,7 @@ export class AuthRepository {
     }
 
     async unfollowUser(followerId: string, followedId: string) {
-        const checkFollowing = await this.checkFollowing(followerId, followedId)
+        const checkFollowing = await this.checkIfFollowingExists(followerId, followedId)
         if (checkFollowing === "new follow") {
             throw new Error("The user wasn't followed!")
         }
@@ -338,7 +379,7 @@ export class AuthRepository {
         const deleteFollowing = await this.deleteFollowing(followerId) //the user got -1 following
         const deleteFollower = await this.deleteFollower(followedId) //the userToFollow got -1 follower
         if (deleteFollowing && deleteFollower === false) return false
-        await this.deleteFromFollows(followerId, followedId)
+        await this.deleteFromFollowsTable(followerId, followedId)
         return true
 
     }
@@ -359,7 +400,7 @@ export class AuthRepository {
     async deleteFollowing(userId: string) {
         const query = `
             UPDATE users
-            SET following = following - 1
+            SET followings = followings - 1
             WHERE id = ?
         `
         const params = [userId]
@@ -369,7 +410,7 @@ export class AuthRepository {
         return true
     }
 
-    async deleteFromFollows(followerId: string, followedId: string) {
+    async deleteFromFollowsTable(followerId: string, followedId: string) {
         const query = `
             DELETE FROM follows
             WHERE followerId = ? AND followedId = ?
@@ -381,6 +422,33 @@ export class AuthRepository {
         return true
     }
 
+    async getUserInfo(userId: string) {
+        const query = `
+            SELECT id, userName, fullName, dateOfBirth, avatar, bio, followers, followings 
+            FROM users
+            WHERE id = ?
+        `
+        const params = [userId]
+        const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query, params)
+        const userInfo = rows[0]
+        if (!userInfo) {
+            throw new Error("User doesn't exist!")
+        }
+
+        const user = new UserEntity(
+            userInfo.id,
+            userInfo.userName,
+            userInfo.fullName,
+            userInfo.dateOfBirth,
+            userInfo.avatar,
+            userInfo.bio,
+            userInfo.followers,
+            userInfo.followings
+        )
+        return user
+    }
+
+
 }
 
 interface IGetUserQueryResult extends RowDataPacket {
@@ -389,11 +457,10 @@ interface IGetUserQueryResult extends RowDataPacket {
     password: string,
     userName: string,
     fullName: string,
-    age: number
+    dateOfBirth: Date
 }
 
 interface IGetFollowsQueryResult extends RowDataPacket {
     followerId: string,
     followedId: string
 }
-

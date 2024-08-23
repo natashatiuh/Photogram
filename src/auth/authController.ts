@@ -40,8 +40,8 @@ router.post("/sign-up", validation(signUpUserSchema), async (req, res) => {
             const authRepository = new AuthRepository(connection)
             const authService = new AuthService(authRepository)
 
-            const { email, password, userName, fullName, age } = req.body
-            const userData = new SignUpUserInput(email, password, userName, fullName, age)
+            const { email, password, userName, fullName, dateOfBirth } = req.body
+            const userData = new SignUpUserInput(email, password, userName, fullName, dateOfBirth)
 
             const tokens = await authService.signUpUser(userData)
             return tokens

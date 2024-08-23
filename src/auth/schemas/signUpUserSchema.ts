@@ -5,5 +5,5 @@ export const signUpUserSchema = joi.object({
     password: joi.string().required().min(8),
     userName: joi.string().required(),
     fullName: joi.string().required(),
-    age: joi.number().required()
+    dateOfBirth: joi.date().required()
 })

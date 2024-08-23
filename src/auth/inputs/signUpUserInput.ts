@@ -3,13 +3,13 @@ export class SignUpUserInput {
     password: string
     userName: string
     fullName: string
-    age: number
+    dateOfBirth: Date
 
-    constructor(email: string, password: string, userName: string, fullName: string, age: number) {
+    constructor(email: string, password: string, userName: string, fullName: string, dateOfBirth: Date) {
         this.email = email
         this.password = password
         this.userName = userName
         this.fullName = fullName
-        this.age = age
+        this.dateOfBirth = dateOfBirth
     }
 }

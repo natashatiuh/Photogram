@@ -13,7 +13,7 @@ export class AuthRepository {
         const userAge = await this.getUserAge(input.dateOfBirth)
         if (userAge < 13) throw new Error("User must be at least 13 years old to sign up.")
 
-        const isEmailUnique = await this.checkEmailUniqueness(userId, input.email)
+        const isEmailUnique = await this.checkEmailUniqueness(input.email)
         if (!isEmailUnique) throw new Error("A user with this email already exists!")
 
         await this.addAuthCredentials(userId, input)
@@ -55,16 +55,16 @@ export class AuthRepository {
 
     async hashPassword(plainPassword: string) {
         const saltRounds = 10
-        const hash = bcrypt.hash(plainPassword, saltRounds)
+        const hash = await bcrypt.hash(plainPassword, saltRounds)
         return hash
     }
 
-    async checkEmailUniqueness(userId: string, email: string) {
+    async checkEmailUniqueness(email: string) {
         const query = `
             SELECT email FROM auth_credentials
-            WHERE userId = ?
+            WHERE email = ?
         `
-        const params = [userId, email]
+        const params = [email]
         const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query, params)
         if (rows.length > 0) return false
         return true        

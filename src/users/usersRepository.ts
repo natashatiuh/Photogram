@@ -3,6 +3,8 @@ import { v4 } from "uuid"
 import jwt, { JwtPayload, Secret } from "jsonwebtoken"
 import bcrypt, { hash } from "bcrypt"
 import { UserEntity } from "./entities/userEntity";
+import { FollowersEntity } from "./entities/followersEntity";
+import { FollowingsEntity } from "./entities/followingsEntity";
 
 export class UsersRepository {
     constructor(private connection: PoolConnection) {}
@@ -29,6 +31,19 @@ export class UsersRepository {
         `
         const params = [newUserFullName, userId]
 
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async changeDateOfBirth(userId: string, newDate: Date) {
+        const query = `
+            UPDATE users
+            SET dateOfBirth = ?
+            WHERE id = ?
+        `
+        const params = [newDate, userId]
         const [rows] = await this.connection.execute(query, params)
         const resultSetHeader = rows as ResultSetHeader
         if (resultSetHeader.affectedRows === 0) return false
@@ -235,6 +250,74 @@ export class UsersRepository {
         return user
     }
 
+    async getAllUsersInfo() {
+        const query = `
+            SELECT id, userName, fullName, dateOfBirth, avatar, bio, followers, followings 
+            FROM users 
+        `
+        const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query)
+
+        if (rows.length === 0) {
+            throw new Error("No users found!")
+        }
+
+        const users = rows.map(userInfo => 
+            new UserEntity(
+                userInfo.id,
+                userInfo.userName,
+                userInfo.fullName,
+                userInfo.dateOfBirth,
+                userInfo.avatar,
+                userInfo.bio,
+                userInfo.followers,
+                userInfo.followings
+            )
+        )
+
+        return users
+    }
+
+    async getAllUserFollowers(followedId: string) {
+        const query = `
+            SELECT followerId 
+            FROM follows
+            WHERE followedId = ?
+        `
+        const params = [followedId]
+        const [rows] = await this.connection.execute<IGetFollowsQueryResult[]>(query, params)
+        if (rows.length === 0) {
+            throw new Error("User has no followers!")
+        }
+
+        const followers = rows.map(follower =>
+            new FollowersEntity(
+                follower.followedId
+            )
+        )
+
+        return followers
+    }
+
+    async getAllUserFollowings(followerId: string) {
+        const query = `
+            SELECT followedId
+            FROM follows
+            WHERE followerId = ?
+        `
+        const params = [followerId]
+        const [rows] = await this.connection.execute<IGetFollowsQueryResult[]>(query, params)
+        if (rows.length === 0) {
+            throw new Error("User has no followings!")
+        }
+
+        const followings = rows.map(following => 
+            new FollowingsEntity (
+                following.followerId
+            )
+        )
+
+        return followings
+    }
 }
 
 interface IGetUserQueryResult extends RowDataPacket {

@@ -76,10 +76,8 @@ describe("Auth Service", () => {
         const signUpUserId = await authService.verifyToken(signUpTokens.accessToken)
         const signInTokens = await authService.signInUser("ariel@gmail.com", "12345678")
         const signInUserId = await authService.verifyToken(signInTokens.accessToken)
-        console.log(signUpUserId)
-        console.log(signInUserId)
+        
         expect(signUpUserId).toEqual(signInUserId)
-
     })
 
     test("user shouldn't be signed in", async () => {

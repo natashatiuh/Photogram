@@ -13,6 +13,7 @@ import { followUserSchema } from "../users/schemas/followUserSchema"
 import { unfollowUserSchema } from "../users/schemas/unfollowUserSchema"
 import { UsersRepository } from "./usersRepository"
 import { UsersService } from "./usersService"
+import { changeDateOfBirthSchema } from "./schemas/changeDateOfBirthSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -61,6 +62,26 @@ router.patch("/user-full-name", validation(changeUserFullNameSchema), auth(), as
             const wasUserFullNameChanged = await usersService.changeUserFullName((req as MyRequest).userId, newUserFullName)
 
             if (!wasUserFullNameChanged) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.patch("/birth-date", validation(changeDateOfBirthSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connetion) => {
+            const usersRepository = new UsersRepository(connetion)
+            const usersService = new UsersService(usersRepository)
+
+            const { newDate } = req.body
+            const wasBirthDateChanged = await usersService.changeDateOfBirth((req as MyRequest).userId, newDate)
+            if (!wasBirthDateChanged) {
                 res.json({ success: false })
             } else {
                 res.json({ success: true })
@@ -186,6 +207,54 @@ router.patch("/unfollow", validation(unfollowUserSchema), auth(), async (req, re
         })
     } catch (error) {
         console.log(error) 
+        res.json({ success: false })
+    }
+})
+
+router.get("/all", async (req, res) => {
+    try {
+        const users = await runInTransaction(async (connection) => {
+            const usersRepository = new UsersRepository(connection)
+            const usersService = new UsersService(usersRepository)
+
+            const users = await usersService.getAllUsersInfo()
+            return users
+        })
+        res.json({ users })
+    } catch (error) {
+        console.log(error) 
+        res.json({ success: false })
+    }
+})
+
+router.get("/followers", async (req, res) => {
+    try {
+        const followers = await runInTransaction(async (connection) => {
+            const usersRepository = new UsersRepository(connection)
+            const usersService = new UsersService(usersRepository)
+
+            const followers = await usersService.getAllUserFollowers((req as MyRequest).userId)
+            return followers
+        })
+        res.json({ followers })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.get("/followings", async (req, res) => {
+    try {
+        const followings = await runInTransaction(async (connection) => {
+            const usersRepository = new UsersRepository(connection)
+            const usersService = new UsersService(usersRepository)
+
+            const followings = await usersService.getAllUserFollowings((req as MyRequest).userId)
+            return followings
+        })
+        res.json({ followings })
+    } catch (error) {
+        console.log(error)
         res.json({ success: false })
     }
 })

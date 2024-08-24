@@ -20,6 +20,7 @@ describe("Auth Service", () => {
     beforeEach(async () => {
         await connection.query("TRUNCATE users")
         await connection.query("TRUNCATE auth_credentials")
+        await connection.query("TRUNCATE follows")
     })
 
     async function createAuthService() {
@@ -41,7 +42,6 @@ describe("Auth Service", () => {
 
         const tokens = await authService.signUpUser(userData)
         const userId = await authService.verifyToken(tokens.accessToken)
-
         const userInfo = await usersService.getUserInfo(userId)
         await usersService.changeUserName(userId, "andrew_tern")
         const changedUser = await usersService.getUserInfo(userId)
@@ -57,7 +57,6 @@ describe("Auth Service", () => {
 
         const tokens = await authService.signUpUser(userData)
         const userId = await authService.verifyToken(tokens.accessToken)
-
         const userInfo = await usersService.getUserInfo(userId)
         await usersService.changeUserFullName(userId, "Princess Cinderella")
         const changedUser = await usersService.getUserInfo(userId)
@@ -74,7 +73,6 @@ describe("Auth Service", () => {
         const tokens = await authService.signUpUser(userData)
         const userId = await authService.verifyToken(tokens.accessToken)
         const userInfo = await usersService.getUserInfo(userId)
-
         await usersService.addAvatar(userId, "daryna_avatar")
         const updatedUserInfo = await usersService.getUserInfo(userId)
 
@@ -179,6 +177,22 @@ describe("Auth Service", () => {
         expect(followingInfo.followers).toEqual(1)
     })
 
+    test("user shouldn't follow the same user twice", async () => {
+        const authService = await createAuthService()
+        const usersService = await createUsersService()
+
+        const userData1 = new SignUpUserInput("user1@gmail.com", "12121212", "user1", "User1", new Date("2004-03-03"))
+        const userData2 = new SignUpUserInput("user2@gmail.com", "12121212", "user2", "User2", new Date("2004-03-03"))
+        const tokens1 = await authService.signUpUser(userData1)
+        const tokens2 = await authService.signUpUser(userData2)
+        const userId1 = await authService.verifyToken(tokens1.accessToken)
+        const userId2 = await authService.verifyToken(tokens2.accessToken)
+        
+        await usersService.followUser(userId1, userId2)
+        
+        expect(usersService.followUser(userId1, userId2)).rejects.toThrow("The user is already followed!")
+    })
+
     test("user should be unfollowed", async () => {
         const authService = await createAuthService()
         const usersService = await createUsersService()
@@ -200,6 +214,75 @@ describe("Auth Service", () => {
         expect(updatedFollower.followings).toEqual(0)
         expect(followingInfo.followers).toEqual(1)
         expect(updatedFollowing.followers).toEqual(0)
+    })
+
+    test("should get all users", async () => {
+        const authService = await createAuthService()
+        const usersService = await createUsersService()
+
+        const userData1 = new SignUpUserInput("user1@gmail.com", "12121212", "user1", "User1", new Date("2004-03-03"))
+        const userData2 = new SignUpUserInput("user2@gmail.com", "12121212", "user2", "User2", new Date("2004-03-03"))
+        const userData3 = new SignUpUserInput("user3@gmail.com", "12121212", "user3", "User3", new Date("2004-03-03"))
+        await authService.signUpUser(userData1)
+        await authService.signUpUser(userData2)
+        await authService.signUpUser(userData3)
+        const users = await usersService.getAllUsersInfo()
+
+        expect(users.length).toEqual(3)
+    })
+
+    test("should get all user's followers", async () => {
+        const authService = await createAuthService()
+        const usersService = await createUsersService()
+
+        const userData1 = new SignUpUserInput("user1@gmail.com", "12121212", "user1", "User1", new Date("2004-03-03"))
+        const userData2 = new SignUpUserInput("user2@gmail.com", "12121212", "user2", "User2", new Date("2004-03-03"))
+        const userData3 = new SignUpUserInput("user3@gmail.com", "12121212", "user3", "User3", new Date("2004-03-03"))
+        const userData4 = new SignUpUserInput("user4@gmail.com", "12121212", "user4", "User4", new Date("2004-03-03"))
+
+        const tokens1 = await authService.signUpUser(userData1)
+        const tokens2 = await authService.signUpUser(userData2)
+        const tokens3 = await authService.signUpUser(userData3)
+        const tokens4 = await authService.signUpUser(userData4)
+
+        const userId1 = await authService.verifyToken(tokens1.accessToken)
+        const userId2 = await authService.verifyToken(tokens2.accessToken)
+        const userId3 = await authService.verifyToken(tokens3.accessToken)
+        const userId4 = await authService.verifyToken(tokens4.accessToken)
+
+        await usersService.followUser(userId1, userId2)
+        await usersService.followUser(userId3, userId2)
+        await usersService.followUser(userId4, userId2)
+        const user2Followers = await usersService.getAllUserFollowers(userId2)
+
+        expect(user2Followers.length).toEqual(3)
+    })
+
+    test("should get all user's followings", async () => {
+        const authService = await createAuthService()
+        const usersService = await createUsersService()
+
+        const userData1 = new SignUpUserInput("user1@gmail.com", "12121212", "user1", "User1", new Date("2004-03-03"))
+        const userData2 = new SignUpUserInput("user2@gmail.com", "12121212", "user2", "User2", new Date("2004-03-03"))
+        const userData3 = new SignUpUserInput("user3@gmail.com", "12121212", "user3", "User3", new Date("2004-03-03"))
+        const userData4 = new SignUpUserInput("user4@gmail.com", "12121212", "user4", "User4", new Date("2004-03-03"))
+
+        const tokens1 = await authService.signUpUser(userData1)
+        const tokens2 = await authService.signUpUser(userData2)
+        const tokens3 = await authService.signUpUser(userData3)
+        const tokens4 = await authService.signUpUser(userData4)
+
+        const userId1 = await authService.verifyToken(tokens1.accessToken)
+        const userId2 = await authService.verifyToken(tokens2.accessToken)
+        const userId3 = await authService.verifyToken(tokens3.accessToken)
+        const userId4 = await authService.verifyToken(tokens4.accessToken)
+
+        await usersService.followUser(userId1, userId2)
+        await usersService.followUser(userId1, userId3)
+        await usersService.followUser(userId1, userId4)
+        const user1Followings = await usersService.getAllUserFollowings(userId1)
+
+        expect(user1Followings.length).toEqual(3)
     })
     
 })

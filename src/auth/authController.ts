@@ -76,8 +76,8 @@ router.patch("/password", validation(changePasswordSchema), auth(), async (req, 
             const authRepository = new AuthRepository(connection)
             const authService = new AuthService(authRepository)
 
-            const { currectPassword, newPassword } = req.body
-            const wasPasswordChanged = await authService.changePassword((req as MyRequest).userId, currectPassword, newPassword)
+            const { currentPassword, newPassword } = req.body
+            const wasPasswordChanged = await authService.changePassword((req as MyRequest).userId, currentPassword, newPassword)
             if(!wasPasswordChanged) {
                 res.json({ success: false })
             } else {

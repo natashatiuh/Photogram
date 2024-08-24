@@ -10,7 +10,8 @@ export class AuthRepository {
 
     async signUpUser(input: SignUpUserInput) {
         const userId = v4()
-        const userAge = await this.getUserAge(input.dateOfBirth)
+        const dateOfBirth = new Date(input.dateOfBirth)
+        const userAge = await this.getUserAge(dateOfBirth)
         if (userAge < 13) throw new Error("User must be at least 13 years old to sign up.")
 
         const isEmailUnique = await this.checkEmailUniqueness(input.email)
@@ -123,6 +124,9 @@ export class AuthRepository {
     }
 
     async checkPassword(plainPassword: string, hashedPassword: string) {
+        if (!plainPassword || !hashedPassword) {
+            throw new Error('Password and hash arguments are required');
+        }
         const match = await bcrypt.compare(plainPassword, hashedPassword)
         return match
     }
@@ -153,7 +157,7 @@ export class AuthRepository {
         }
 
         const currentHashedPassword = rows[0]?.password
-
+        
         if (!currentHashedPassword) {
             throw new Error("No password found!")
         }
@@ -162,7 +166,7 @@ export class AuthRepository {
         if (!match) {
             throw new Error("Current password is incorrect!")
         }
-
+        
         const newHashedPassword = await this.hashPassword(newPassword)
         const updateQuery = `
             UPDATE auth_credentials

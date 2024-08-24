@@ -291,7 +291,7 @@ export class UsersRepository {
 
         const followers = rows.map(follower =>
             new FollowersEntity(
-                follower.followedId
+                follower.followerId
             )
         )
 
@@ -312,7 +312,7 @@ export class UsersRepository {
 
         const followings = rows.map(following => 
             new FollowingsEntity (
-                following.followerId
+                following.followedId
             )
         )
 

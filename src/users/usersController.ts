@@ -227,7 +227,7 @@ router.get("/all", async (req, res) => {
     }
 })
 
-router.get("/followers", async (req, res) => {
+router.get("/followers", auth(), async (req, res) => {
     try {
         const followers = await runInTransaction(async (connection) => {
             const usersRepository = new UsersRepository(connection)
@@ -243,7 +243,7 @@ router.get("/followers", async (req, res) => {
     }
 })
 
-router.get("/followings", async (req, res) => {
+router.get("/followings", auth(), async (req, res) => {
     try {
         const followings = await runInTransaction(async (connection) => {
             const usersRepository = new UsersRepository(connection)

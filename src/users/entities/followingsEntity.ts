@@ -1,7 +1,7 @@
 export class FollowingsEntity {
-    followerId: string
+    followedId: string
 
-    constructor(followerId: string) {
-        this.followerId = followerId
+    constructor(followedId: string) {
+        this.followedId = followedId
     }
 }

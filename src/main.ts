@@ -4,6 +4,7 @@ import dotenv from "dotenv"
 dotenv.config()
 
 import { router as authController } from "../src/auth/authController"
+import { router as usersController } from "../src/users/usersController"
 
 async function main() {
     const app = express()
@@ -13,6 +14,7 @@ async function main() {
     app.use(corse())
 
     app.use("/auth", authController)
+    app.use("/users", usersController)
 
     app.listen(port, () => {
         console.log(`Server is listening on port ${port}`)

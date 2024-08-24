@@ -1,5 +1,3 @@
-import { date } from "joi"
-
 export class UserEntity {
     id: string
     userName: string

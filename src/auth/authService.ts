@@ -31,21 +31,6 @@ export class AuthService {
         return auth_credentials
     }
 
-    async getUserInfo(userId: string) {
-        const user = await this.authRepository.getUserInfo(userId)
-        return user
-    }
-
-    async changeUserName(userId: string, newUserName: string) {
-        const wasUserNameChanged = await this.authRepository.changeUserName(userId, newUserName)
-        return wasUserNameChanged
-    }
-
-    async changeUserFullName(userId: string, newUserFullName: string) {
-        const wasUserFullNameChanged = await this.authRepository.changeUserFullName(userId, newUserFullName)
-        return wasUserFullNameChanged
-    }
-
     async changeEmail(userId: string, newEmail: string) {
         const wasEmailChanged = await this.authRepository.changeEmail(userId, newEmail)
         return wasEmailChanged
@@ -59,36 +44,6 @@ export class AuthService {
     async deleteUser(userId: string) {
         const wasUserDeleted = await this.authRepository.deleteUser(userId)
         return wasUserDeleted
-    }
-
-    async addAvatar(userId: string, avatar?: string) {
-        const wasAvatarAdded = await this.authRepository.addAvatar(userId, avatar)
-        return wasAvatarAdded
-    }
-
-    async deleteAvatar(userId: string) {
-        const wasAvatarDeleted = await this.authRepository.deleteAvatar(userId)
-        return wasAvatarDeleted
-    }
-
-    async addUserBio(userId: string, bio: string) {
-        const wasBioAdded = await this.authRepository.addUserBio(userId, bio)
-        return wasBioAdded
-    }
-
-    async deleteUserBio(userId: string) {
-        const wasBioDeleted = await this.authRepository.deleteUserBio(userId)
-        return wasBioDeleted
-    }
-
-    async followUser(followerId: string, followedId: string) {
-        const wasFollowingOkay = await this.authRepository.followUser(followerId, followedId)
-        return wasFollowingOkay
-    }
-
-    async unfollowUser(followerId: string, followedId: string) {
-        const wasUnfollowingOkay = await this.authRepository.unfollowUser(followerId, followedId)
-        return wasUnfollowingOkay
     }
 
 }

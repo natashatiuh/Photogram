@@ -10,7 +10,7 @@ import { UsersService } from "./usersService"
 
 jest.setTimeout(6 * 1000)
 
-describe("Auth Service", () => {
+describe("Users Service", () => {
     let connection: PoolConnection
 
     beforeAll(async () => {

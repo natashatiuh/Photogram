@@ -226,7 +226,7 @@ export class UsersRepository {
 
     async getUserInfo(userId: string) {
         const query = `
-            SELECT id, userName, fullName, dateOfBirth, avatar, bio, followers, followings 
+            SELECT id, userName, fullName, dateOfBirth, avatar, bio, followers, followings, posts 
             FROM users
             WHERE id = ?
         `
@@ -245,14 +245,15 @@ export class UsersRepository {
             userInfo.avatar,
             userInfo.bio,
             userInfo.followers,
-            userInfo.followings
+            userInfo.followings,
+            userInfo.posts
         )
         return user
     }
 
     async getAllUsersInfo() {
         const query = `
-            SELECT id, userName, fullName, dateOfBirth, avatar, bio, followers, followings 
+            SELECT id, userName, fullName, dateOfBirth, avatar, bio, followers, followings, posts 
             FROM users 
         `
         const [rows] = await this.connection.execute<IGetUserQueryResult[]>(query)
@@ -270,7 +271,8 @@ export class UsersRepository {
                 userInfo.avatar,
                 userInfo.bio,
                 userInfo.followers,
-                userInfo.followings
+                userInfo.followings,
+                userInfo.posts
             )
         )
 

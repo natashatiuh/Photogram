@@ -8,7 +8,7 @@ export class PhotosRepository {
         const startDate = new Date()
         const query = `
             INSERT INTO photos 
-            (id, userId, description, likes, markedUsers, archieved, sharings, savings, dateOfPublishing)
+            (id, userId, description, likes, markedUsers, archived, sharings, savings, dateOfPublishing)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
         const params = [
@@ -35,7 +35,7 @@ export class PhotosRepository {
 
     async getAllUserPhotos(userId: string) {
         const query = `
-            SELECT id, userId, description, likes, markedUsers, archieved, sharings, savings
+            SELECT id, userId, description, likes, markedUsers, archived, sharings, savings
             FROM photos 
             WHERE userId = ?
         `
@@ -52,13 +52,39 @@ export class PhotosRepository {
                 photo.description,
                 photo.likes,
                 photo.markedUsers,
-                photo.archieved,
+                photo.archived,
                 photo.sharings,
                 photo.savings
             )
         )
 
         return photos
+    }
+
+    async changePhotoDescription(photoId: string, newDescription: string, userId: string) {
+        const query = `
+            UPDATE photos
+            SET description = ?
+            WHERE id = ? AND userId = ?
+        `
+        const params = [newDescription, photoId, userId]
+        const [rows] = await this.connection.execute(query, params) 
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async archivePhoto(photoId: string, userId: string) {
+        const query = `
+            UPDATE photos
+            SET archived = true
+            WHERE id = ? AND userId = ?
+        `
+        const params = [photoId, userId]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true 
     }
 }
 
@@ -68,7 +94,7 @@ interface IGetPhotoQueryResult extends RowDataPacket {
     description: string,
     likes: number,
     markedUsers: boolean,
-    archieved: boolean,
+    archived: boolean,
     sharings: number,
     savings: number
 }

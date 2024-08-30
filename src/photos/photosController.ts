@@ -8,6 +8,8 @@ import { runInTransaction } from "../common/middlewares/transaction"
 import { PhotosRepository } from "./photosRepository"
 import { PhotosService } from "./photosService"
 import { MyRequest } from "../common/requestDefinition"
+import { changePhotoDescription } from "./schemas/changePhotoDescriptionSchema"
+import { archivePhotoSchema } from "./schemas/archivePhotoSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -59,6 +61,46 @@ router.get("/all-user-photos", auth(), async (req, res) => {
             }
         })
         return photos
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.patch("/description", validation(changePhotoDescription), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const { photoId, newDescription } = req.body
+            const wasDescriptionChanged = await photosService.changePhotoDescription(photoId, newDescription, (req as MyRequest).userId)
+            if (!wasDescriptionChanged) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.patch("/archive", validation(archivePhotoSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const { photoId } = req.body
+            const wasPhotoArchived = await photosService.archivePhoto(photoId, (req as MyRequest).userId)
+            if (!wasPhotoArchived) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
     } catch (error) {
         console.log(error)
         res.json({ success: false })

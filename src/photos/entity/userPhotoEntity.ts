@@ -4,19 +4,19 @@ export class UserPhotoEntity {
     description: string
     likes: number
     markedUsers: boolean
-    archieved: boolean
+    archived: boolean
     sharings: number
     savings: number
 
     constructor(
         id: string, userId: string, description: string, likes: number, markedUsers: boolean, 
-        archieved: boolean, sharings: number, savings: number) {
+        archived: boolean, sharings: number, savings: number) {
             this.id = id,
             this.userId = userId
             this.description = description
             this.likes = likes
             this.markedUsers = markedUsers
-            this.archieved = archieved
+            this.archived = archived
             this.sharings = sharings
             this.savings = savings
         }

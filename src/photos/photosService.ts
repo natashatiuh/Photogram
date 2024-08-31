@@ -24,4 +24,9 @@ export class PhotosService {
         const wasPhotoArchived = await this.photosRepository.archivePhoto(photoId, userId)
         return wasPhotoArchived
     }
+
+    async savePhoto(photoId: string, saverId: string) {
+        const wasPhotoSaved = await this.photosRepository.savePhoto(photoId, saverId)
+        return wasPhotoSaved
+    }
 }

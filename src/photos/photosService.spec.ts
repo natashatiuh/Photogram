@@ -23,6 +23,7 @@ describe("Photos Service", () => {
         await connection.query("TRUNCATE users")
         await connection.query("TRUNCATE auth_credentials")
         await connection.query("TRUNCATE photos")
+        await connection.query("TRUNCATE saved_content")
     })
 
     async function createAuthService() {
@@ -102,5 +103,21 @@ describe("Photos Service", () => {
 
         expect(photos[0]?.archived).toEqual(0)
         expect(photos[1]?.archived).toEqual(1)
+    })
+
+    test("photo should be saved", async () => {
+        const authService = await createAuthService()
+        const photosService = await createPhotosService()
+        const userData = new SignUpUserInput("jack@gmail.com", "12121212", "jack", "Jack", new Date("2000-08-14"))
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        await photosService.addPhoto(userId, "description", "photo1")
+        await photosService.addPhoto(userId, "description", "photo2")
+        await photosService.savePhoto("photo2",userId)
+        const photos = await photosService.getAllUserPhotos(userId)
+
+        expect(photos[0]?.savings).toEqual(0)
+        expect(photos[1]?.savings).toEqual(1)
     })
 })

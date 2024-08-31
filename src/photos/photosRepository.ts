@@ -1,5 +1,6 @@
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { UserPhotoEntity } from "./entity/userPhotoEntity";
+import { v4 } from "uuid";
 
 export class PhotosRepository {
     constructor(private connection: PoolConnection) {}
@@ -85,6 +86,36 @@ export class PhotosRepository {
         const resultSetHeader = rows as ResultSetHeader
         if (resultSetHeader.affectedRows === 0) return false
         return true 
+    }
+
+    async savePhoto(photoId: string, saverId: string) {
+        const query = `
+            UPDATE photos
+            SET savings = savings + 1
+            WHERE id = ?
+        `
+        const params = [photoId]
+
+        const wasContentSaved = await this.addSavingToTheTable(photoId, saverId)
+        if(!wasContentSaved) throw new Error("Saving wasn't added!")
+
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async addSavingToTheTable(photoId: string, saverId: string) {
+        const id = v4()
+        const query = `
+            INSERT INTO saved_content (id, contentId, saverId)
+            VALUES (?, ?, ?)
+        `
+        const params = [id, photoId, saverId] 
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
     }
 }
 

@@ -10,6 +10,7 @@ import { PhotosService } from "./photosService"
 import { MyRequest } from "../common/requestDefinition"
 import { changePhotoDescription } from "./schemas/changePhotoDescriptionSchema"
 import { archivePhotoSchema } from "./schemas/archivePhotoSchema"
+import { savePhotoSchema } from "./schemas/savePhotoSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -102,6 +103,26 @@ router.patch("/archive", validation(archivePhotoSchema), auth(), async (req, res
             }
         })
     } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.patch("/save", validation(savePhotoSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const { photoId } = req.body
+            const wasPhotoSaved = await photosService.savePhoto(photoId, (req as MyRequest).userId)
+            if (!wasPhotoSaved) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch(error) {
         console.log(error)
         res.json({ success: false })
     }

@@ -11,6 +11,7 @@ import { MyRequest } from "../common/requestDefinition"
 import { changePhotoDescription } from "./schemas/changePhotoDescriptionSchema"
 import { archivePhotoSchema } from "./schemas/archivePhotoSchema"
 import { savePhotoSchema } from "./schemas/savePhotoSchema"
+import { unsavePhotoSchema } from "./schemas/unsavePhotoSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -108,7 +109,7 @@ router.patch("/archive", validation(archivePhotoSchema), auth(), async (req, res
     }
 })
 
-router.patch("/save", validation(savePhotoSchema), auth(), async (req, res) => {
+router.post("/save", validation(savePhotoSchema), auth(), async (req, res) => {
     try {
         await runInTransaction(async (connection) => {
             const photosRepository = new PhotosRepository(connection)
@@ -122,6 +123,46 @@ router.patch("/save", validation(savePhotoSchema), auth(), async (req, res) => {
                 res.json({ success: true })
             }
         })
+    } catch(error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.delete("/unsave", validation(unsavePhotoSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const { photoId } = req.body
+            const wasPhotoUnsaved = await photosService.unsavePhoto(photoId, (req as MyRequest).userId)
+            if (!wasPhotoUnsaved) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch(error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.get("/user-saved-photos", auth(), async (req, res) => {
+    try {
+        const savedContent = await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const savedContent = await photosService.getAllUserSavedContent((req as MyRequest).userId)
+            if (!savedContent) {
+                res.json({ success: false })
+            } else {
+                res.json({ savedContent })
+            }
+        })
+        return savedContent
     } catch(error) {
         console.log(error)
         res.json({ success: false })

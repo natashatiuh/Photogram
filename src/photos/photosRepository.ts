@@ -1,6 +1,7 @@
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { UserPhotoEntity } from "./entity/userPhotoEntity";
 import { v4 } from "uuid";
+import { SavedContentEntity } from "./entity/savedContentEntity";
 
 export class PhotosRepository {
     constructor(private connection: PoolConnection) {}
@@ -117,6 +118,58 @@ export class PhotosRepository {
         if (resultSetHeader.affectedRows === 0) return false
         return true
     }
+
+    async unsavePhoto(photoId: string, saverId: string) {
+        const query = `
+            UPDATE photos
+            SET savings = savings - 1
+            WHERE id = ?
+        `
+        const params = [photoId]
+
+        const wasSavingDeleted = await this.deleteSavingFromTheTable(photoId, saverId)
+        if (!wasSavingDeleted) throw new Error("Saving was NOT deleted!")
+
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async deleteSavingFromTheTable(photoId: string, saverId: string) {
+        const query = `
+            DELETE FROM saved_content
+            WHERE contentId = ? AND saverId = ?
+        `
+        const params = [photoId, saverId]
+        const [rows] = await this.connection.execute(query ,params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async getAllUserSavedContent(saverId: string) {
+        const query = `
+            SELECT  id, contentId, saverId
+            FROM saved_content
+            WHERE saverId = ?
+        `
+        const params = [saverId]
+        const [rows] = await this.connection.execute<IGetSavedContentQueryResult[]>(query, params)
+        if (rows.length === 0)  {
+           throw new Error("User has NO saved content!") 
+        }
+
+       const savedContent = rows.map(content => 
+            new SavedContentEntity(
+                content.id,
+                content.contentId,
+                content.saverId
+            )
+        )
+        
+        return savedContent
+    }
 }
 
 interface IGetPhotoQueryResult extends RowDataPacket {
@@ -128,4 +181,10 @@ interface IGetPhotoQueryResult extends RowDataPacket {
     archived: boolean,
     sharings: number,
     savings: number
+}
+
+interface IGetSavedContentQueryResult extends RowDataPacket {
+    id: string,
+    contentId: string,
+    saverId: string
 }

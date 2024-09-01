@@ -29,4 +29,14 @@ export class PhotosService {
         const wasPhotoSaved = await this.photosRepository.savePhoto(photoId, saverId)
         return wasPhotoSaved
     }
+
+    async unsavePhoto(photoId: string, saverId: string) {
+        const wasPhotoUnsaved = await this.photosRepository.unsavePhoto(photoId, saverId)
+        return wasPhotoUnsaved
+    }
+
+    async getAllUserSavedContent(saverId: string) {
+        const savedContent = await this.photosRepository.getAllUserSavedContent(saverId)
+        return savedContent
+    }
 }

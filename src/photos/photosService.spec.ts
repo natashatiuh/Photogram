@@ -114,10 +114,38 @@ describe("Photos Service", () => {
         const userId = await authService.verifyToken(tokens.accessToken)
         await photosService.addPhoto(userId, "description", "photo1")
         await photosService.addPhoto(userId, "description", "photo2")
+        await photosService.addPhoto(userId, "description", "photo3")
         await photosService.savePhoto("photo2",userId)
+        await photosService.savePhoto("photo3", userId)
         const photos = await photosService.getAllUserPhotos(userId)
+        const savedContent = await photosService.getAllUserSavedContent(userId)
 
         expect(photos[0]?.savings).toEqual(0)
         expect(photos[1]?.savings).toEqual(1)
+        expect(photos[2]?.savings).toEqual(1)
+        expect(savedContent.length).toEqual(2)
+    })
+
+    test("photo should be unsaved", async () => {
+        const authService = await createAuthService()
+        const photosService = await createPhotosService()
+        const userData = new SignUpUserInput("dream@gmail.com", "12121212", "dream", "Dream", new Date("2000-08-14"))
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        await photosService.addPhoto(userId, "description", "photo1")
+        await photosService.addPhoto(userId, "description", "photo2")
+        await photosService.addPhoto(userId, "description", "photo3")
+        await photosService.savePhoto("photo1", userId)
+        await photosService.savePhoto("photo2",userId)
+        await photosService.savePhoto("photo3",userId)
+        await photosService.unsavePhoto("photo1", userId)
+        const photos = await photosService.getAllUserPhotos(userId)
+        const savedContent = await photosService.getAllUserSavedContent(userId)
+
+        
+        expect(photos[0]?.savings).toEqual(0)
+        expect(photos[1]?.savings).toEqual(1)
+        expect(savedContent.length).toEqual(2)
     })
 })

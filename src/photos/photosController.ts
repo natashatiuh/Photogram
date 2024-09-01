@@ -12,6 +12,8 @@ import { changePhotoDescription } from "./schemas/changePhotoDescriptionSchema"
 import { archivePhotoSchema } from "./schemas/archivePhotoSchema"
 import { savePhotoSchema } from "./schemas/savePhotoSchema"
 import { unsavePhotoSchema } from "./schemas/unsavePhotoSchema"
+import { likePhotoSchema } from "./schemas/likePhotoSchema"
+import { getAllPhotoLikesSchema } from "./schemas/getAllPhotoLikesSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -164,6 +166,47 @@ router.get("/user-saved-photos", auth(), async (req, res) => {
         })
         return savedContent
     } catch(error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.post("/like", validation(likePhotoSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const { photoId } = req.body
+            const wasLikeAdded = await photosService.likePhoto(photoId, (req as MyRequest).userId)
+            if (!wasLikeAdded) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.get("/likes", validation(getAllPhotoLikesSchema), async (req, res) => {
+    try {
+        const photoLikes = await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const { photoId } = req.body
+            const photoLikes = await photosService.getAllPhotoLikes(photoId)
+            if (!photoLikes) {
+                res.json({ success: false })
+            } else {
+                res.json({ photoLikes })
+            }
+        })
+        return photoLikes
+    } catch (error) {
         console.log(error)
         res.json({ success: false })
     }

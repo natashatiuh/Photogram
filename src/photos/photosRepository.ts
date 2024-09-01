@@ -2,6 +2,7 @@ import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { UserPhotoEntity } from "./entity/userPhotoEntity";
 import { v4 } from "uuid";
 import { SavedContentEntity } from "./entity/savedContentEntity";
+import { PhotoLikeEntity } from "./entity/photoLikeEntity";
 
 export class PhotosRepository {
     constructor(private connection: PoolConnection) {}
@@ -167,8 +168,61 @@ export class PhotosRepository {
                 content.saverId
             )
         )
-        
         return savedContent
+    }
+
+    async likePhoto(photoId: string, userId: string) {
+        const query = `
+            UPDATE photos
+            SET likes = likes + 1
+            WHERE id = ?
+        `
+        const params = [photoId]
+
+        const wasLikeAdded = await this.addLikeToLikes(photoId, userId)
+        if (!wasLikeAdded) throw new Error("Like was NOT added!")
+
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async addLikeToLikes(photoId: string, userId: string) {
+        const id = v4()
+        const todayDate = new Date()
+
+        const query = `
+            INSERT INTO likes (id, contentId, likedBy, date) 
+            VALUES (?, ?, ?, ?)
+        `
+        const params = [id, photoId, userId, todayDate]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async getAllPhotoLikes(photoId: string) {
+        const query = `
+            SELECT id, contentId, likedBy
+            FROM likes
+            WHERE contentId = ?
+        `
+        const params = [photoId]
+        const [rows] = await this.connection.execute<IGetLikesQueryResult[]>(query, params)
+        if (rows.length === 0) {
+            throw new Error("Photo has NO likes!")
+        }
+
+        const likes = rows.map(like => 
+            new PhotoLikeEntity(
+                like.id,
+                like.contentId,
+                like.likedBy
+            )
+        )
+        return likes
     }
 }
 
@@ -187,4 +241,10 @@ interface IGetSavedContentQueryResult extends RowDataPacket {
     id: string,
     contentId: string,
     saverId: string
+}
+
+interface IGetLikesQueryResult extends RowDataPacket {
+    id: string,
+    contentId: string,
+    likedBy: string,
 }

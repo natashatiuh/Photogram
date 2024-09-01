@@ -39,4 +39,14 @@ export class PhotosService {
         const savedContent = await this.photosRepository.getAllUserSavedContent(saverId)
         return savedContent
     }
+
+    async likePhoto(photoId: string, userId: string) {
+        const wasLikeAdded = await this.photosRepository.likePhoto(photoId, userId)
+        return wasLikeAdded
+    }
+
+    async getAllPhotoLikes(photoId: string) {
+        const likes = await this.photosRepository.getAllPhotoLikes(photoId)
+        return likes
+    }
 }

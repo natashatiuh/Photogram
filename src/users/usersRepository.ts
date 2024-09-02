@@ -5,6 +5,7 @@ import bcrypt, { hash } from "bcrypt"
 import { UserEntity } from "./entities/userEntity";
 import { FollowersEntity } from "./entities/followersEntity";
 import { FollowingsEntity } from "./entities/followingsEntity";
+import { IGetFollowsQueryResult, IGetUserQueryResult } from "./interfaces";
 
 export class UsersRepository {
     constructor(private connection: PoolConnection) {}
@@ -322,16 +323,4 @@ export class UsersRepository {
     }
 }
 
-interface IGetUserQueryResult extends RowDataPacket {
-    userId: string,
-    email: string,
-    password: string,
-    userName: string,
-    fullName: string,
-    dateOfBirth: Date
-}
 
-interface IGetFollowsQueryResult extends RowDataPacket {
-    followerId: string,
-    followedId: string
-}

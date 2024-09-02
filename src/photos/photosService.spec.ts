@@ -25,6 +25,7 @@ describe("Photos Service", () => {
         await connection.query("TRUNCATE photos")
         await connection.query("TRUNCATE saved_content")
         await connection.query("TRUNCATE likes")
+        await connection.query("TRUNCATE marked_users")
     })
 
     async function createAuthService() {
@@ -189,5 +190,29 @@ describe("Photos Service", () => {
 
         expect(photos[0]?.likes).toEqual(1)
         expect(photoLikes.length).toEqual(1)
+    })
+
+    test("user should be marked", async () => {
+        const authService = await createAuthService()
+        const photosService = await createPhotosService()
+        const userDataOne = new SignUpUserInput("dream@gmail.com", "12121212", "dream", "Dream", new Date("2000-08-14"))
+        const userDataTwo = new SignUpUserInput("jack@gmail.com", "12121212", "jack", "Jack", new Date("2000-08-14"))
+        const userDataThree = new SignUpUserInput("kendal@gmail.com", "12121212", "kendal", "Kendal", new Date("2000-08-14"))
+
+        const tokensOne = await authService.signUpUser(userDataOne)
+        const tokensTwo = await authService.signUpUser(userDataTwo)
+        const tokensThree = await authService.signUpUser(userDataThree)
+        const userIdOne = await authService.verifyToken(tokensOne.accessToken)
+        const userIdTwo = await authService.verifyToken(tokensTwo.accessToken)
+        const userIdThree = await authService.verifyToken(tokensThree.accessToken)
+
+        await photosService.addPhoto(userIdOne, "description", "photo1")
+        await photosService.markUserOnThePhoto("photo1", userIdOne, userIdTwo)
+        await photosService.markUserOnThePhoto("photo1", userIdOne, userIdThree)
+        const photo = await photosService.getAllUserPhotos(userIdOne)
+        const markedUsers = await photosService.getUsersMarkedInPhoto("photo1")
+
+        expect(photo[0]?.markedUsers).toEqual(1)
+        expect(markedUsers.length).toEqual(2)
     })
 })

@@ -3,6 +3,8 @@ import { UserPhotoEntity } from "./entity/userPhotoEntity";
 import { v4 } from "uuid";
 import { SavedContentEntity } from "./entity/savedContentEntity";
 import { PhotoLikeEntity } from "./entity/photoLikeEntity";
+import { IGetLikesQueryResult, IGetMarkedUsersQueryResult, IGetPhotoQueryResult, IGetSavedContentQueryResult } from "./interfaces";
+import { MarkedUsersEntity } from "./entity/markedUsersEntity";
 
 export class PhotosRepository {
     constructor(private connection: PoolConnection) {}
@@ -253,27 +255,53 @@ export class PhotosRepository {
         )
         return likes
     }
+
+    async markUserOnThePhoto(photoId: string, userId: string, markedUser: string) {
+        const query = `
+            UPDATE photos 
+            SET markedUsers = true
+            WHERE id = ? AND userId = ?
+        `
+        const params = [photoId, userId]
+
+        const wasMarkedUserAdded = await this.addMarkedUser(photoId, markedUser)
+        if (!wasMarkedUserAdded) throw new Error("Marked user was NOT added!")
+
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async addMarkedUser(photoId: string, markedUser: string) {
+        const query = `
+            INSERT INTO marked_users (userId, contentId) 
+            VALUES (?, ?)
+        `
+        const params = [markedUser, photoId]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async getUsersMarkedInPhoto(photoId: string) {
+        const query = `
+            SELECT userId FROM marked_users
+            WHERE contentId = ?
+        `
+        const params = [photoId]
+        const [rows] = await this.connection.execute<IGetMarkedUsersQueryResult[]>(query, params)
+        if (rows.length === 0) {
+            throw new Error("The photo has NO marked users!")
+        }
+
+        const markedUsers = rows.map(markedUser => 
+            new MarkedUsersEntity(
+                markedUser.userId
+            )
+        )
+            return markedUsers
+    }
 }
 
-interface IGetPhotoQueryResult extends RowDataPacket {
-    id: string,
-    userId: string,
-    description: string,
-    likes: number,
-    markedUsers: boolean,
-    archived: boolean,
-    sharings: number,
-    savings: number
-}
-
-interface IGetSavedContentQueryResult extends RowDataPacket {
-    id: string,
-    contentId: string,
-    saverId: string
-}
-
-interface IGetLikesQueryResult extends RowDataPacket {
-    id: string,
-    contentId: string,
-    likedBy: string,
-}

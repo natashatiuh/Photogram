@@ -54,4 +54,14 @@ export class PhotosService {
         const wasLikeDeleted = await this.photosRepository.unlikePhoto(photoId, userId)
         return wasLikeDeleted
     }
+
+    async markUserOnThePhoto(photoId: string, userId: string, markedUser: string) {
+        const wasUserMarked = await this.photosRepository.markUserOnThePhoto(photoId, userId, markedUser)
+        return wasUserMarked
+    }
+
+    async getUsersMarkedInPhoto(photoId: string) {
+        const markedUsers = await this.photosRepository.getUsersMarkedInPhoto(photoId)
+        return markedUsers
+    }
 }

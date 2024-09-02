@@ -4,6 +4,7 @@ import { v4 } from "uuid"
 import jwt, { JwtPayload, Secret } from "jsonwebtoken"
 import bcrypt, { hash } from "bcrypt"
 import { AuthCredentialsEntity } from "./entity/authCredentialsEntity";
+import { IGetUserQueryResult } from "./interfaces";
 
 export class AuthRepository {
     constructor(private connection: PoolConnection) {}
@@ -235,11 +236,3 @@ export class AuthRepository {
 
 }
 
-interface IGetUserQueryResult extends RowDataPacket {
-    userId: string,
-    email: string,
-    password: string,
-    userName: string,
-    fullName: string,
-    dateOfBirth: Date
-}

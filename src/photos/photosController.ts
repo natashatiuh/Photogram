@@ -15,6 +15,8 @@ import { unsavePhotoSchema } from "./schemas/unsavePhotoSchema"
 import { likePhotoSchema } from "./schemas/likePhotoSchema"
 import { getAllPhotoLikesSchema } from "./schemas/getAllPhotoLikesSchema"
 import { unlikePhotoSchema } from "./schemas/unlikePhotoSchema"
+import { markUserOnThePhotoSchema } from "./schemas/markUserOnThePhoto"
+import { getUsersMarkedInPhotoSchema } from "./schemas/getUsersMarkedInPhotoSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -227,6 +229,47 @@ router.delete("/unlike", validation(unlikePhotoSchema), auth(), async (req, res)
                 res.json({ success: true })
             }
         })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.post("/mark-user", validation(markUserOnThePhotoSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const { photoId, markedUser } = req.body
+            const wasUserMarked = await photosService.markUserOnThePhoto(photoId, (req as MyRequest).userId, markedUser)
+            if (!wasUserMarked) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.get("/marked-users", validation(getUsersMarkedInPhotoSchema), async (req, res) => {
+    try {
+        const markedUsers = await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const { photoId } = req.body
+            const markedUsers = await photosService.getUsersMarkedInPhoto(photoId)
+            if (!markedUsers) {
+                res.json({ success: false })
+            } else {
+                res.json({ markedUsers })
+            }
+        })
+        return markedUsers
     } catch (error) {
         console.log(error)
         res.json({ success: false })

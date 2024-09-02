@@ -17,6 +17,7 @@ import { getAllPhotoLikesSchema } from "./schemas/getAllPhotoLikesSchema"
 import { unlikePhotoSchema } from "./schemas/unlikePhotoSchema"
 import { markUserOnThePhotoSchema } from "./schemas/markUserOnThePhoto"
 import { getUsersMarkedInPhotoSchema } from "./schemas/getUsersMarkedInPhotoSchema"
+import { deleteMarkedUserOnThePhotoSchema } from "./schemas/deleteMarkedUserOnThePhotoSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -270,6 +271,26 @@ router.get("/marked-users", validation(getUsersMarkedInPhotoSchema), async (req,
             }
         })
         return markedUsers
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.delete("/unmark-user", validation(deleteMarkedUserOnThePhotoSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const { photoId, markedUser } = req.body
+            const wasMarkedUserDeleted = await photosService.deleteMarkedUserOnThePhoto(photoId, (req as MyRequest).userId, markedUser)
+            if (!wasMarkedUserDeleted) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
     } catch (error) {
         console.log(error)
         res.json({ success: false })

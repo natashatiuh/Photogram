@@ -64,4 +64,14 @@ export class PhotosService {
         const markedUsers = await this.photosRepository.getUsersMarkedInPhoto(photoId)
         return markedUsers
     }
+
+    async deleteMarkedUserOnThePhoto(photoId: string, userId: string, markedUser: string) {
+        const wasUserDeleted = await this.photosRepository.deleteMarkedUserOnThePhoto(photoId, markedUser)
+        const isThereAnyMarkedUsersOnThePhoto = await this.photosRepository.checkIfThereIsMarkedUserOnThePhoto(photoId)
+        if (isThereAnyMarkedUsersOnThePhoto.length === 0) {
+            await this.photosRepository.setMarkedUsersFalse(photoId, userId)
+        } 
+
+        return wasUserDeleted
+    }
 }

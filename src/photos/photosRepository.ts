@@ -303,5 +303,41 @@ export class PhotosRepository {
         )
             return markedUsers
     }
+
+    async deleteMarkedUserOnThePhoto(photoId: string, markedUser: string) {
+        const query = `
+            DELETE FROM marked_users
+            WHERE contentId = ? AND userId = ?
+        `
+        const params = [photoId, markedUser]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async checkIfThereIsMarkedUserOnThePhoto(photoId: string) {
+        const query = `
+            SELECT * FROM marked_users
+            WHERE contentId = ?
+        `
+        const params = [photoId]
+        const [rows] = await this.connection.execute<IGetMarkedUsersQueryResult[]>(query, params)
+        return rows
+    }
+
+    async setMarkedUsersFalse(photoId: string, userId: string) {
+        const query = `
+            UPDATE photos
+            SET markedUsers = false
+            WHERE id = ? AND userId = ?
+        `
+        const params = [ photoId, userId ]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
 }
 

@@ -49,4 +49,9 @@ export class PhotosService {
         const likes = await this.photosRepository.getAllPhotoLikes(photoId)
         return likes
     }
+
+    async unlikePhoto(photoId: string, userId: string) {
+        const wasLikeDeleted = await this.photosRepository.unlikePhoto(photoId, userId)
+        return wasLikeDeleted
+    }
 }

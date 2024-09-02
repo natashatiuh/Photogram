@@ -169,4 +169,25 @@ describe("Photos Service", () => {
         expect(photos[0]?.likes).toEqual(2)
         expect(photoLikes.length).toEqual(2)
     })
+
+    test("like should be deleted", async () => {
+        const authService = await createAuthService()
+        const photosService = await createPhotosService()
+        const userDataOne = new SignUpUserInput("dream@gmail.com", "12121212", "dream", "Dream", new Date("2000-08-14"))
+        const userDataTwo = new SignUpUserInput("jack@gmail.com", "12121212", "jack", "Jack", new Date("2000-08-14"))
+
+        const tokensOne = await authService.signUpUser(userDataOne)
+        const tokensTwo = await authService.signUpUser(userDataTwo)
+        const userIdOne = await authService.verifyToken(tokensOne.accessToken)
+        const userIdTwo = await authService.verifyToken(tokensTwo.accessToken)
+        await photosService.addPhoto(userIdOne, "description", "photo1")
+        await photosService.likePhoto("photo1", userIdOne)
+        await photosService.likePhoto("photo1", userIdTwo)
+        await photosService.unlikePhoto("photo1", userIdOne)
+        const photos = await photosService.getAllUserPhotos(userIdOne)
+        const photoLikes = await photosService.getAllPhotoLikes("photo1")
+
+        expect(photos[0]?.likes).toEqual(1)
+        expect(photoLikes.length).toEqual(1)
+    })
 })

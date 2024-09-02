@@ -203,6 +203,35 @@ export class PhotosRepository {
         return true
     }
 
+    async unlikePhoto(photoId: string, userId: string) {
+        const query = `
+            UPDATE photos
+            SET likes = likes - 1
+            WHERE id = ?
+        `
+        const params = [photoId]
+
+        const wasLikeDeleted = await this.deleteLikeFromLikes(photoId, userId)
+        if (!wasLikeDeleted) throw new Error("Like was NOT deleted!")
+
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async deleteLikeFromLikes(photoId: string, userId: string) {
+        const query = `
+            DELETE FROM likes
+            WHERE contentId = ? AND likedBy = ?
+        `
+        const params = [photoId, userId]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
     async getAllPhotoLikes(photoId: string) {
         const query = `
             SELECT id, contentId, likedBy

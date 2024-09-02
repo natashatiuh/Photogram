@@ -14,6 +14,7 @@ import { savePhotoSchema } from "./schemas/savePhotoSchema"
 import { unsavePhotoSchema } from "./schemas/unsavePhotoSchema"
 import { likePhotoSchema } from "./schemas/likePhotoSchema"
 import { getAllPhotoLikesSchema } from "./schemas/getAllPhotoLikesSchema"
+import { unlikePhotoSchema } from "./schemas/unlikePhotoSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -206,6 +207,26 @@ router.get("/likes", validation(getAllPhotoLikesSchema), async (req, res) => {
             }
         })
         return photoLikes
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.delete("/unlike", validation(unlikePhotoSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const { photoId } = req.body
+            const wasLikeDeleted = await photosService.unlikePhoto(photoId, (req as MyRequest).userId)
+            if (!wasLikeDeleted) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
     } catch (error) {
         console.log(error)
         res.json({ success: false })

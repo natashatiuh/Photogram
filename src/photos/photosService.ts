@@ -74,4 +74,9 @@ export class PhotosService {
 
         return wasUserDeleted
     }
+
+    async deletePhoto(photoId: string, userId: string) {
+        const wasPhotoDeleted = this.photosRepository.deletePhoto(photoId, userId)
+        return wasPhotoDeleted
+    }
 }

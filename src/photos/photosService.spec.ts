@@ -264,4 +264,20 @@ describe("Photos Service", () => {
 
         expect(photo[0]?.markedUsers).toEqual(0)
     })
+
+    test("photo should be deleted", async () => {
+        const authService = await createAuthService()
+        const photosService = await createPhotosService()
+        const userData = new SignUpUserInput("rocky@gmail.com", "12121212", "rocky", "Rocky", new Date("2000-08-14"))
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        await photosService.addPhoto(userId, "photo here", "photo1")
+        await photosService.addPhoto(userId, "another photo", "photo2")
+        await photosService.addPhoto(userId, "and another photo", "photo3")
+        await photosService.deletePhoto("photo1", userId)
+        const photos = await photosService.getAllUserPhotos(userId)
+
+        expect(photos.length).toEqual(2)
+    })
 })

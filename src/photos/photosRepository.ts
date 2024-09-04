@@ -339,5 +339,17 @@ export class PhotosRepository {
         return true
     }
 
+    async deletePhoto(photoId: string, userId: string) {
+        const query = `
+            DELETE FROM photos
+            WHERE id = ? AND userId = ?
+        `
+        const params = [photoId, userId]
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
 }
 

@@ -38,9 +38,10 @@ export class PhotosRepository {
         return true
     }
 
+    //only user by itself can use this function, because this function shows all photos, even archieved
     async getAllUserPhotos(userId: string) {
         const query = `
-            SELECT id, userId, description, likes, markedUsers, archived, sharings, savings
+            SELECT id, userId, description, likes, markedUsers, archived, sharings, savings, dateOfPublishing
             FROM photos 
             WHERE userId = ?
         `
@@ -59,7 +60,8 @@ export class PhotosRepository {
                 photo.markedUsers,
                 photo.archived,
                 photo.sharings,
-                photo.savings
+                photo.savings,
+                photo.dateOfPublishing
             )
         )
 
@@ -349,6 +351,32 @@ export class PhotosRepository {
         const resultSetHeader = rows as ResultSetHeader
         if (resultSetHeader.affectedRows === 0) return false
         return true
+    }
+
+    //all photos of all users(unarchived)
+    async getAllPhotos() {
+        const query = `
+            SELECT id, userId, description, likes, markedUsers, archived, sharings, savings, dateOfPublishing
+            FROM photos
+            WHERE archived = false
+        `
+        const [rows] = await this.connection.execute<IGetPhotoQueryResult[]>(query)
+        if (rows.length === 0) throw new Error("There are NO photos!")
+
+        const photos = rows.map(photo => 
+                new UserPhotoEntity(
+                    photo.id,
+                    photo.userId,
+                    photo.description,
+                    photo.likes,
+                    photo.markedUsers,
+                    photo.archived,
+                    photo.sharings,
+                    photo.savings,
+                    photo.dateOfPublishing
+            )
+        )
+        return photos
     }
 
 }

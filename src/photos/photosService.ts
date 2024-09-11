@@ -84,4 +84,9 @@ export class PhotosService {
         const photos = await this.photosRepository.getAllPhotos()
         return photos
     }
+
+    async getAllUserArchivedPhotos(userId: string) {
+        const photos = await this.photosRepository.getAllUserArchivedPhotos(userId)
+        return photos
+    }
 }

@@ -296,4 +296,23 @@ describe("Photos Service", () => {
 
         expect(photos.length).toEqual(2)
     })
+
+    test("all archived photos should be shown", async () => {
+        const authService = await createAuthService()
+        const photosService = await createPhotosService()
+        const userData = new SignUpUserInput("rocky@gmail.com", "12121212", "rocky", "Rocky", new Date("2000-08-14"))
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        await photosService.addPhoto(userId, "photo here", "photo1")
+        await photosService.addPhoto(userId, "another photo", "photo2")
+        await photosService.addPhoto(userId, "and another photo", "photo3")
+        await photosService.archivePhoto("photo1", userId)
+        await photosService.archivePhoto("photo2", userId)
+        const archivedPhotos = await photosService.getAllUserArchivedPhotos(userId)
+        const photos = await photosService.getAllUserPhotos(userId) 
+
+        expect(archivedPhotos.length).toEqual(2)
+        expect(photos.length).toEqual(3)
+    })
 })

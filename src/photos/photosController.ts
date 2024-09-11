@@ -337,3 +337,23 @@ router.get("/all-photos", async (req, res) => {
         res.json({ success: false })
     }
 })
+
+router.get("/archived-photos", auth(), async (req, res) => {
+    try {
+        const photos = await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const photos = await photosService.getAllUserArchivedPhotos((req as MyRequest).userId)
+            if (!photos) {
+                res.json({ success: false })
+            } else {
+                res.json({ photos })
+            }
+        })
+        return photos
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})

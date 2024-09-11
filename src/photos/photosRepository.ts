@@ -381,7 +381,8 @@ export class PhotosRepository {
 
     async getAllUserArchivedPhotos(userId: string) {
         const query = `
-            SELECT * FROM photos
+            SELECT id, userId, description, likes, markedUsers, archived, sharings, savings, dateOfPublishing 
+            FROM photos
             WHERE userId = ? AND archived = true
         `
         const params = [userId]
@@ -401,7 +402,32 @@ export class PhotosRepository {
                 photo.dateOfPublishing
         )
     )
+    return photos
+}
 
+async getAllUserUnarchivedPhotos(userId: string) {
+    const query = `
+        SELECT id, userId, description, likes, markedUsers, archived, sharings, savings, dateOfPublishing 
+        FROM photos
+        WHERE userId = ? AND archived = false
+    `
+    const params = [userId]
+    const [rows] = await this.connection.execute<IGetPhotoQueryResult[]>(query, params)
+    if (rows.length === 0) throw new Error("There are NO photos!")
+
+    const photos = rows.map(photo =>
+        new UserPhotoEntity(
+            photo.id,
+            photo.userId,
+            photo.description,
+            photo.likes,
+            photo.markedUsers,
+            photo.archived,
+            photo.sharings,
+            photo.savings,
+            photo.dateOfPublishing
+        )
+    )
     return photos
 }
 

@@ -331,4 +331,27 @@ describe("Photos Service", () => {
 
         expect(photos.length).toEqual(2)
     })
+
+    test("photo savings should be shown", async () => {
+        const authService = await createAuthService()
+        const photosService = await createPhotosService()
+        const userDataOne = new SignUpUserInput("dream@gmail.com", "12121212", "dream", "Dream", new Date("2000-08-14"))
+        const userDataTwo = new SignUpUserInput("jack@gmail.com", "12121212", "jack", "Jack", new Date("2000-08-14"))
+        const userDataThree = new SignUpUserInput("kendal@gmail.com", "12121212", "kendal", "Kendal", new Date("2000-08-14"))
+
+        const tokensOne = await authService.signUpUser(userDataOne)
+        const tokensTwo = await authService.signUpUser(userDataTwo)
+        const tokensThree = await authService.signUpUser(userDataThree)
+        const userIdOne = await authService.verifyToken(tokensOne.accessToken)
+        const userIdTwo = await authService.verifyToken(tokensTwo.accessToken)
+        const userIdThree = await authService.verifyToken(tokensThree.accessToken)
+
+        await photosService.addPhoto(userIdOne, "description", "photo1")
+        await photosService.savePhoto("photo1", userIdOne)
+        await photosService.savePhoto("photo1", userIdTwo)
+        await photosService.savePhoto("photo1", userIdThree)
+        const savings = await photosService.getPhotoSavingsAmount("photo1", userIdOne)
+
+        expect(savings).toEqual(3)
+    })
 })

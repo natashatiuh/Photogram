@@ -3,7 +3,7 @@ import { UserPhotoEntity } from "./entity/userPhotoEntity";
 import { v4 } from "uuid";
 import { SavedContentEntity } from "./entity/savedContentEntity";
 import { PhotoLikeEntity } from "./entity/photoLikeEntity";
-import { IGetLikesQueryResult, IGetMarkedUsersQueryResult, IGetPhotoQueryResult, IGetSavedContentQueryResult } from "./interfaces";
+import { IGetLikesQueryResult, IGetMarkedUsersQueryResult, IGetPhotoQueryResult, IGetSavedContentQueryResult, IGetSavingsQueryResult } from "./interfaces";
 import { MarkedUsersEntity } from "./entity/markedUsersEntity";
 
 export class PhotosRepository {
@@ -429,6 +429,21 @@ async getAllUserUnarchivedPhotos(userId: string) {
         )
     )
     return photos
+}
+
+async getPhotoSavingsAmount(photoId: string, userId: string) {
+    const query = `
+        SELECT savings
+        FROM photos
+        WHERE id = ? AND userId = ?
+    `
+    const params = [photoId, userId]
+
+    const [rows] = await this.connection.execute<IGetSavingsQueryResult[]>(query, params)
+    if (rows.length === 0) throw new Error("There are NO photos!")
+
+    const savingsAmount = rows[0]?.savings
+    return savingsAmount
 }
 
 }

@@ -27,3 +27,7 @@ export interface IGetMarkedUsersQueryResult extends RowDataPacket {
     userId: string
     contentId: string
 }
+
+export interface IGetSavingsQueryResult extends RowDataPacket {
+    savings: number
+}

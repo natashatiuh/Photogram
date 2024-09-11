@@ -19,6 +19,7 @@ import { markUserOnThePhotoSchema } from "./schemas/markUserOnThePhoto"
 import { getUsersMarkedInPhotoSchema } from "./schemas/getUsersMarkedInPhotoSchema"
 import { deleteMarkedUserOnThePhotoSchema } from "./schemas/deleteMarkedUserOnThePhotoSchema"
 import { deletePhotoSchema } from "./schemas/deletePhotoSchema"
+import { getPhotoSavingsAmountSchema } from "./schemas/getPhotoSavingsAmountSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -372,6 +373,27 @@ router.get("/unarchived-photos", auth(), async (req, res) => {
             }
         })
         return photos
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.get("/photo-savings", validation(getPhotoSavingsAmountSchema), auth(), async (req, res) => {
+    try {
+        const savings = await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const { photoId } = req.body
+            const savings = await photosService.getPhotoSavingsAmount(photoId, (req as MyRequest).userId)
+            if (!savings) {
+                res.json({ success: false })
+            } else {
+                res.json({ savings })
+            }
+        })
+        return savings
     } catch (error) {
         console.log(error)
         res.json({ success: false })

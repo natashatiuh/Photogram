@@ -31,3 +31,11 @@ export interface IGetMarkedUsersQueryResult extends RowDataPacket {
 export interface IGetSavingsQueryResult extends RowDataPacket {
     savings: number
 }
+
+export interface IGetSharingsQueryResult extends RowDataPacket {
+    sharings: number
+}
+
+export interface IGetArchivedQueryResult extends RowDataPacket {
+    archived: boolean
+}

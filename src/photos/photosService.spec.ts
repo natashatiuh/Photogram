@@ -107,6 +107,24 @@ describe("Photos Service", () => {
         expect(photos[1]?.archived).toEqual(1)
     })
 
+    test ("photo should be unarchived", async () => {
+        const authService = await createAuthService()
+        const photosService = await createPhotosService()
+        const userData = new SignUpUserInput("north@gmail.com", "12121212", "north", "North", new Date("2000-08-14"))
+
+        const tokens = await authService.signUpUser(userData)
+        const userId = await authService.verifyToken(tokens.accessToken)
+        await photosService.addPhoto(userId, "description1", "photo1")
+        await photosService.addPhoto(userId, "description2", "photo2")
+        await photosService.archivePhoto("photo1", userId)
+        await photosService.archivePhoto("photo2", userId)
+        await photosService.unarchivePhoto("photo2", userId)
+        const photos = await photosService.getAllUserPhotos(userId)
+
+        expect(photos[0]?.archived).toEqual(1)
+        expect(photos[1]?.archived).toEqual(0)
+    })
+
     test("photo should be saved", async () => {
         const authService = await createAuthService()
         const photosService = await createPhotosService()
@@ -354,4 +372,5 @@ describe("Photos Service", () => {
 
         expect(savings).toEqual(3)
     })
+
 })

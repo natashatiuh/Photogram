@@ -20,6 +20,8 @@ import { getUsersMarkedInPhotoSchema } from "./schemas/getUsersMarkedInPhotoSche
 import { deleteMarkedUserOnThePhotoSchema } from "./schemas/deleteMarkedUserOnThePhotoSchema"
 import { deletePhotoSchema } from "./schemas/deletePhotoSchema"
 import { getPhotoSavingsAmountSchema } from "./schemas/getPhotoSavingsAmountSchema"
+import { getPhotoSharingsAmountSchema } from "./schemas/getPhotoSharingsAmount"
+import { unarchivePhotoSchema } from "./schemas/unarchivePhotoSchema"
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -106,6 +108,26 @@ router.patch("/archive", validation(archivePhotoSchema), auth(), async (req, res
             const { photoId } = req.body
             const wasPhotoArchived = await photosService.archivePhoto(photoId, (req as MyRequest).userId)
             if (!wasPhotoArchived) {
+                res.json({ success: false })
+            } else {
+                res.json({ success: true })
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false })
+    }
+})
+
+router.patch("/unarchive", validation(unarchivePhotoSchema), auth(), async (req, res) => {
+    try {
+        await runInTransaction(async (connection) => {
+            const photosRepository = new PhotosRepository(connection)
+            const photosService = new PhotosService(photosRepository)
+
+            const { photoId } = req.body
+            const wasPhotoUnarchived = await photosService.unarchivePhoto(photoId, (req as MyRequest).userId)
+            if (!wasPhotoUnarchived) {
                 res.json({ success: false })
             } else {
                 res.json({ success: true })
@@ -399,3 +421,24 @@ router.get("/photo-savings", validation(getPhotoSavingsAmountSchema), auth(), as
         res.json({ success: false })
     }
 })
+
+// router.get("/photo-sharings", validation(getPhotoSharingsAmountSchema), auth(), async (req, res) => {
+//     try {
+//         const sharings = await runInTransaction(async (connection) => {
+//             const photosRepository = new PhotosRepository(connection)
+//             const photosService = new PhotosService(photosRepository)
+
+//             const { photoId } = req.body
+//             const sharings = await photosService.getPhotoSharingsAmount(photoId, (req as MyRequest).userId)
+//             if (!sharings) {
+//                 res.json({ success: false })
+//             } else {
+//                 res.json({ sharings })
+//             }
+//         })
+//         return sharings
+//     } catch (error) {
+//         console.log(error)
+//         res.json({ success: false })
+//     }
+// })

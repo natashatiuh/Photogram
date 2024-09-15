@@ -25,6 +25,11 @@ export class PhotosService {
         return wasPhotoArchived
     }
 
+    async unarchivePhoto(photoId: string, userId: string) {
+        const wasPhotoUnarchived = await this.photosRepository.unarchivePhoto(photoId, userId)
+        return wasPhotoUnarchived
+    }
+
     async savePhoto(photoId: string, saverId: string) {
         const wasPhotoSaved = await this.photosRepository.savePhoto(photoId, saverId)
         return wasPhotoSaved
@@ -99,4 +104,9 @@ export class PhotosService {
         const savings = await this.photosRepository.getPhotoSavingsAmount(photoId, userId)
         return savings
     }
+
+    // async getPhotoSharingsAmount(photoId: string, userId: string) {
+    //     const sharings = await this.photosRepository.getPhotoSharingsAmount(photoId, userId)
+    //     return sharings
+    // }
 }

@@ -3,7 +3,7 @@ import { UserPhotoEntity } from "./entity/userPhotoEntity";
 import { v4 } from "uuid";
 import { SavedContentEntity } from "./entity/savedContentEntity";
 import { PhotoLikeEntity } from "./entity/photoLikeEntity";
-import { IGetLikesQueryResult, IGetMarkedUsersQueryResult, IGetPhotoQueryResult, IGetSavedContentQueryResult, IGetSavingsQueryResult } from "./interfaces";
+import { IGetArchivedQueryResult, IGetLikesQueryResult, IGetMarkedUsersQueryResult, IGetPhotoQueryResult, IGetSavedContentQueryResult, IGetSavingsQueryResult, IGetSharingsQueryResult } from "./interfaces";
 import { MarkedUsersEntity } from "./entity/markedUsersEntity";
 
 export class PhotosRepository {
@@ -88,10 +88,38 @@ export class PhotosRepository {
             WHERE id = ? AND userId = ?
         `
         const params = [photoId, userId]
+        const isPhotoArchived = await this.checkIfPhotoIsAlreadyArchived(photoId)
+        if (isPhotoArchived) throw new Error("The photo is already archived!")
         const [rows] = await this.connection.execute(query, params)
         const resultSetHeader = rows as ResultSetHeader
         if (resultSetHeader.affectedRows === 0) return false
         return true 
+    }
+
+    async unarchivePhoto(photoId: string, userId: string) {
+        const query = `
+            UPDATE photos
+            SET archived = false
+            WHERE id = ? AND userId = ?
+        `
+        const params = [photoId, userId]
+        const isPhotoArchived = await this.checkIfPhotoIsAlreadyArchived(photoId)
+        if (!isPhotoArchived) throw new Error("Photo is NOT archived!")
+        const [rows] = await this.connection.execute(query, params)
+        const resultSetHeader = rows as ResultSetHeader
+        if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async checkIfPhotoIsAlreadyArchived(photoId: string) {
+        const query = `
+            SELECT archived FROM photos
+            WHERE id = ?
+        `
+        const params = [photoId]
+        const [rows] = await this.connection.execute<IGetArchivedQueryResult[]>(query, params) 
+        if (rows.length === 0) return false
+        return rows[0]?.archived
     }
 
     async savePhoto(photoId: string, saverId: string) {
@@ -102,6 +130,8 @@ export class PhotosRepository {
         `
         const params = [photoId]
 
+        const isPhotoSaved = await this.checkIfPhotoIsAlreadySaved(photoId, saverId)
+        if (isPhotoSaved) throw new Error("The photo is already saved!")
         const wasContentSaved = await this.addSavingToTheTable(photoId, saverId)
         if(!wasContentSaved) throw new Error("Saving wasn't added!")
 
@@ -124,6 +154,18 @@ export class PhotosRepository {
         return true
     }
 
+    async checkIfPhotoIsAlreadySaved(photoId: string, saverId: string) {
+        const query = `
+            SELECT id, contentId, saverId
+            FROM saved_content
+            WHERE contentId = ? AND saverId = ?
+        `
+        const params = [photoId, saverId]
+        const [rows] = await this.connection.execute<IGetSavedContentQueryResult[]>(query, params)
+        if (rows.length === 0) return false
+        return true 
+    }
+
     async unsavePhoto(photoId: string, saverId: string) {
         const query = `
             UPDATE photos
@@ -132,6 +174,8 @@ export class PhotosRepository {
         `
         const params = [photoId]
 
+        const isPhotoSaved = await this.checkIfPhotoIsAlreadySaved(photoId, saverId)
+        if (!isPhotoSaved) throw new Error("The photo is NOT saved!")
         const wasSavingDeleted = await this.deleteSavingFromTheTable(photoId, saverId)
         if (!wasSavingDeleted) throw new Error("Saving was NOT deleted!")
 
@@ -183,6 +227,8 @@ export class PhotosRepository {
         `
         const params = [photoId]
 
+        const doesLikeExist = await this.checkUserLike(photoId, userId)
+        if (!doesLikeExist) throw new Error("You can NOT like one photo twice!")
         const wasLikeAdded = await this.addLikeToLikes(photoId, userId)
         if (!wasLikeAdded) throw new Error("Like was NOT added!")
 
@@ -204,6 +250,17 @@ export class PhotosRepository {
         const [rows] = await this.connection.execute(query, params)
         const resultSetHeader = rows as ResultSetHeader
         if (resultSetHeader.affectedRows === 0) return false
+        return true
+    }
+
+    async checkUserLike(photoId: string, userId: string) {
+        const query = `
+            SELECT id, contentId, likedBy FROM likes
+            WHERE contentId = ? AND likedBy = ?
+        `
+        const params = [photoId, userId]
+        const [rows] = await this.connection.execute<IGetLikesQueryResult[]>(query, params)
+        if (rows.length != 0) return false
         return true
     }
 
@@ -265,7 +322,9 @@ export class PhotosRepository {
             WHERE id = ? AND userId = ?
         `
         const params = [photoId, userId]
-
+        
+        const isUserMarked = await this.checkIfUserIsAlreadyMarked(markedUser, photoId)
+        if (isUserMarked) throw new Error("The user is already marked!")
         const wasMarkedUserAdded = await this.addMarkedUser(photoId, markedUser)
         if (!wasMarkedUserAdded) throw new Error("Marked user was NOT added!")
 
@@ -306,12 +365,26 @@ export class PhotosRepository {
             return markedUsers
     }
 
+    async checkIfUserIsAlreadyMarked(markedUser: string, photoId: string) {
+        const query = `
+            SELECT userId, contentId 
+            FROM marked_users
+            WHERE userId = ? AND contentId = ?
+        `
+        const params = [markedUser, photoId]
+        const [rows] = await this.connection.execute<IGetMarkedUsersQueryResult[]>(query, params)
+        if (rows.length === 0) return false
+        return true
+    }
+
     async deleteMarkedUserOnThePhoto(photoId: string, markedUser: string) {
         const query = `
             DELETE FROM marked_users
             WHERE contentId = ? AND userId = ?
         `
         const params = [photoId, markedUser]
+        const isUserMarked = await this.checkIfUserIsAlreadyMarked(markedUser, photoId)
+        if (!isUserMarked) throw new Error("The user was NOT marked!")
         const [rows] = await this.connection.execute(query, params)
         const resultSetHeader = rows as ResultSetHeader
         if (resultSetHeader.affectedRows === 0) return false
@@ -445,6 +518,21 @@ async getPhotoSavingsAmount(photoId: string, userId: string) {
     const savingsAmount = rows[0]?.savings
     return savingsAmount
 }
+
+// async getPhotoSharingsAmount(photoId: string, userId: string) {
+//     const query = `
+//         SELECT sharings
+//         FROM photos
+//         WHERE id = ? AND userId = ?
+//     `
+//     const params = [photoId, userId]
+
+//     const [rows] = await this.connection.execute<IGetSharingsQueryResult[]>(query, params)
+//     if (rows.length === 0) throw new Error("There are NO photos!")
+
+//     const sharingsAmount = rows[0]?.sharings
+//     return sharingsAmount
+// }
 
 }
 

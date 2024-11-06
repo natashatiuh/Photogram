@@ -1,11 +1,9 @@
 export class PhotoLikeEntity {
-    id: string
-    contentId: string
-    likedBy: string
+  id: string;
+  postId: string;
+  likedBy: string;
 
-    constructor(id: string, contentId: string, likedBy: string) {
-        this.id = id,
-        this.contentId = contentId
-        this.likedBy = likedBy
-    }
+  constructor(id: string, postId: string, likedBy: string) {
+    (this.id = id), (this.postId = postId), (this.likedBy = likedBy);
+  }
 }

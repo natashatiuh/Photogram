@@ -23,7 +23,7 @@ describe("Photos Service", () => {
     await connection.query("TRUNCATE users");
     await connection.query("TRUNCATE auth_credentials");
     await connection.query("TRUNCATE posts");
-    await connection.query("TRUNCATE saved_content");
+    await connection.query("TRUNCATE saved_posts");
     await connection.query("TRUNCATE likes");
     await connection.query("TRUNCATE marked_users");
   });

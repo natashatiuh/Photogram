@@ -178,7 +178,7 @@ export class PhotosRepository {
   async addSavingToTheTable(photoId: string, saverId: string) {
     const id = v4();
     const query = `
-            INSERT INTO saved_content (id, contentId, saverId)
+            INSERT INTO saved_posts (id, postId, saverId)
             VALUES (?, ?, ?)
         `;
     const params = [id, photoId, saverId];
@@ -190,9 +190,9 @@ export class PhotosRepository {
 
   async checkIfPhotoIsAlreadySaved(photoId: string, saverId: string) {
     const query = `
-            SELECT id, contentId, saverId
-            FROM saved_content
-            WHERE contentId = ? AND saverId = ?
+            SELECT id, postId, saverId
+            FROM saved_posts
+            WHERE postId = ? AND saverId = ?
         `;
     const params = [photoId, saverId];
     const [rows] = await this.connection.execute<IGetSavedContentQueryResult[]>(
@@ -230,8 +230,8 @@ export class PhotosRepository {
 
   async deleteSavingFromTheTable(photoId: string, saverId: string) {
     const query = `
-            DELETE FROM saved_content
-            WHERE contentId = ? AND saverId = ?
+            DELETE FROM saved_posts
+            WHERE postId = ? AND saverId = ?
         `;
     const params = [photoId, saverId];
     const [rows] = await this.connection.execute(query, params);
@@ -242,8 +242,8 @@ export class PhotosRepository {
 
   async getAllUserSavedContent(saverId: string) {
     const query = `
-            SELECT  id, contentId, saverId
-            FROM saved_content
+            SELECT  id, postId, saverId
+            FROM saved_posts
             WHERE saverId = ?
         `;
     const params = [saverId];
@@ -286,7 +286,7 @@ export class PhotosRepository {
     const todayDate = new Date();
 
     const query = `
-            INSERT INTO likes (id, contentId, likedBy, date) 
+            INSERT INTO likes (id, postId, likedBy, date) 
             VALUES (?, ?, ?, ?)
         `;
     const params = [id, photoId, userId, todayDate];
@@ -298,8 +298,8 @@ export class PhotosRepository {
 
   async checkUserLike(photoId: string, userId: string) {
     const query = `
-            SELECT id, contentId, likedBy FROM likes
-            WHERE contentId = ? AND likedBy = ?
+            SELECT id, postId, likedBy FROM likes
+            WHERE postId = ? AND likedBy = ?
         `;
     const params = [photoId, userId];
     const [rows] = await this.connection.execute<IGetLikesQueryResult[]>(
@@ -330,7 +330,7 @@ export class PhotosRepository {
   async deleteLikeFromLikes(photoId: string, userId: string) {
     const query = `
             DELETE FROM likes
-            WHERE contentId = ? AND likedBy = ?
+            WHERE postId = ? AND likedBy = ?
         `;
     const params = [photoId, userId];
     const [rows] = await this.connection.execute(query, params);
@@ -341,9 +341,9 @@ export class PhotosRepository {
 
   async getAllPhotoLikes(photoId: string) {
     const query = `
-            SELECT id, contentId, likedBy
+            SELECT id, postId, likedBy
             FROM likes
-            WHERE contentId = ?
+            WHERE postId = ?
         `;
     const params = [photoId];
     const [rows] = await this.connection.execute<IGetLikesQueryResult[]>(
@@ -388,7 +388,7 @@ export class PhotosRepository {
 
   async addMarkedUser(photoId: string, markedUser: string) {
     const query = `
-            INSERT INTO marked_users (userId, contentId) 
+            INSERT INTO marked_users (userId, postId) 
             VALUES (?, ?)
         `;
     const params = [markedUser, photoId];
@@ -401,7 +401,7 @@ export class PhotosRepository {
   async getUsersMarkedInPhoto(photoId: string) {
     const query = `
             SELECT userId FROM marked_users
-            WHERE contentId = ?
+            WHERE postId = ?
         `;
     const params = [photoId];
     const [rows] = await this.connection.execute<IGetMarkedUsersQueryResult[]>(
@@ -420,9 +420,9 @@ export class PhotosRepository {
 
   async checkIfUserIsAlreadyMarked(markedUser: string, photoId: string) {
     const query = `
-            SELECT userId, contentId 
+            SELECT userId, postId 
             FROM marked_users
-            WHERE userId = ? AND contentId = ?
+            WHERE userId = ? AND postId = ?
         `;
     const params = [markedUser, photoId];
     const [rows] = await this.connection.execute<IGetMarkedUsersQueryResult[]>(
@@ -436,7 +436,7 @@ export class PhotosRepository {
   async deleteMarkedUserOnThePhoto(photoId: string, markedUser: string) {
     const query = `
             DELETE FROM marked_users
-            WHERE contentId = ? AND userId = ?
+            WHERE postId = ? AND userId = ?
         `;
     const params = [photoId, markedUser];
     const isUserMarked = await this.checkIfUserIsAlreadyMarked(
@@ -453,7 +453,7 @@ export class PhotosRepository {
   async checkIfThereIsMarkedUserOnThePhoto(photoId: string) {
     const query = `
             SELECT * FROM marked_users
-            WHERE contentId = ?
+            WHERE postId = ?
         `;
     const params = [photoId];
     const [rows] = await this.connection.execute<IGetMarkedUsersQueryResult[]>(

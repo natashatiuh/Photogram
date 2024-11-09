@@ -11,6 +11,7 @@ import {
   IGetSavedContentQueryResult,
   IGetSavingsQueryResult,
   IGetSharingsQueryResult,
+  IGetViewsQueryResults,
 } from "./interfaces";
 import { MarkedUsersEntity } from "./entity/markedUsersEntity";
 
@@ -597,6 +598,38 @@ export class PhotosRepository {
 
     const savingsAmount = rows[0]?.savings;
     return savingsAmount;
+  }
+
+  async viewPhoto(photoId: string) {
+    const query = `
+      UPDATE posts 
+      SET views = views + 1
+      WHERE id = ?
+    `;
+    const params = [photoId];
+
+    const [rows] = await this.connection.execute(query, params);
+    const resultSetHeader = rows as ResultSetHeader;
+    if (resultSetHeader.affectedRows === 0) return false;
+    return true;
+  }
+
+  async getPhotoViews(photoId: string, userId: string) {
+    const query = `
+      SELECT views 
+      FROM posts
+      WHERE id = ? AND userId = ?
+    `;
+    const params = [photoId, userId];
+
+    const [rows] = await this.connection.execute<IGetViewsQueryResults[]>(
+      query,
+      params
+    );
+    if (rows.length === 0) throw new Error("There is NO photo!");
+
+    const viewsAmount = rows[0]?.views;
+    return viewsAmount;
   }
 
   // async getPhotoSharingsAmount(photoId: string, userId: string) {

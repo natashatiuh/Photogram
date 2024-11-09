@@ -552,4 +552,33 @@ describe("Photos Service", () => {
 
     expect(savings).toEqual(3);
   });
+
+  test("photo should be viewed", async () => {
+    const authService = await createAuthService();
+    const photosService = await createPhotosService();
+    const userDataOne = new SignUpUserInput(
+      "rocky@gmail.com",
+      "12121212",
+      "rocky",
+      "Rocky",
+      new Date("2000-08-14")
+    );
+    const userDataTwo = new SignUpUserInput(
+      "stepan@gmail.com",
+      "12121212",
+      "stepan",
+      "Stepan",
+      new Date("2000-08-14")
+    );
+
+    const tokensOne = await authService.signUpUser(userDataOne);
+    const userIdOne = await authService.verifyToken(tokensOne.accessToken);
+    const photoId = "photo1";
+    await photosService.addPhoto(userIdOne, "description", photoId);
+    await photosService.viewPhoto(photoId);
+    await photosService.viewPhoto(photoId);
+    const photoViews = await photosService.getPhotoViews(photoId, userIdOne);
+
+    expect(photoViews).toEqual(2);
+  });
 });

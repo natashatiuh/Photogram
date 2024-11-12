@@ -1,4 +1,4 @@
-import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { UserPhotoEntity } from "./entity/userPhotoEntity";
 import { v4 } from "uuid";
 import { SavedContentEntity } from "./entity/savedContentEntity";

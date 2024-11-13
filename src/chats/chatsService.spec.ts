@@ -70,5 +70,25 @@ describe("Photos Service", () => {
     expect(user2Chats.length).toEqual(1);
   });
 
+  test("group chat should be created", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+
+    const userData = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const tokens = await authService.signUpUser(userData);
+    const userId = await authService.verifyToken(tokens.accessToken);
+    await chatsService.createGroupChat("Classmates group", userId);
+    const userChat = await chatsService.getUserGroupChats(userId);
+
+    expect(userChat.length).toEqual(1);
+    expect(userChat[0]?.name).toEqual("Classmates group");
+  });
+
   //there are should be a test which check if the first message in chat was added to messages table
 });

@@ -20,4 +20,17 @@ export class ChatsService {
     const userChats = await this.chatsRepository.getUserOneToOneChats(userId);
     return userChats;
   }
+
+  async createGroupChat(name: string, creatorId: string) {
+    const wasChatCreated = await this.chatsRepository.createGroupChat(
+      name,
+      creatorId
+    );
+    return wasChatCreated;
+  }
+
+  async getUserGroupChats(userId: string) {
+    const userChats = await this.chatsRepository.getUserGroupChats(userId);
+    return userChats;
+  }
 }

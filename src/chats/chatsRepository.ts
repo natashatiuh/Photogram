@@ -1,7 +1,11 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { v4 } from "uuid";
-import { IGetUserChatsQueryResults } from "./interfaces";
+import {
+  IGetOneToOneUserChatsQueryResults,
+  IGetUserGroupChatsQueryResults,
+} from "./interfaces";
 import { OneToOneChatEntity } from "./entities/oneToOneChatEntity";
+import { GroupChatEntity } from "./entities/groupChatEntity";
 
 export class ChatsRepository {
   constructor(private connection: PoolConnection) {}
@@ -61,16 +65,51 @@ export class ChatsRepository {
     `;
     const params = [userId, userId];
 
-    const [rows] = await this.connection.execute<IGetUserChatsQueryResults[]>(
-      query,
-      params
-    );
+    const [rows] = await this.connection.execute<
+      IGetOneToOneUserChatsQueryResults[]
+    >(query, params);
 
     if (rows.length === 0) throw new Error("User has NO chats!");
 
     const userChats = rows.map(
       (chat) =>
         new OneToOneChatEntity(chat.id, chat.user1, chat.user2, chat.createdAt)
+    );
+
+    return userChats;
+  }
+
+  async createGroupChat(name: string, creatorId: string) {
+    const todayDate = new Date();
+    const chatId = v4();
+    const query = `
+        INSERT INTO chats (id, type, name, creatorId, createdAt)
+        VALUES (?, ?, ?, ?, ?)
+    `;
+    const params = [chatId, "group", name, creatorId, todayDate];
+    const [rows] = await this.connection.execute(query, params);
+    const resultSetHeader = rows as ResultSetHeader;
+    if (resultSetHeader.affectedRows === 0) return false;
+    return true;
+  }
+
+  async getUserGroupChats(userId: string) {
+    const query = `
+        SELECT id, name, creatorId, createdAt
+        FROM chats 
+        WHERE creatorId = ?
+    `;
+    //i need to check chatparticipants table
+    const params = [userId];
+    const [rows] = await this.connection.execute<
+      IGetUserGroupChatsQueryResults[]
+    >(query, params);
+
+    if (rows.length === 0) throw new Error("There are no group chats!");
+
+    const userChats = rows.map(
+      (chat) =>
+        new GroupChatEntity(chat.id, chat.name, chat.creatorId, chat.createdAt)
     );
 
     return userChats;

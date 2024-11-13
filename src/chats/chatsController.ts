@@ -6,6 +6,7 @@ import { runInTransaction } from "../common/middlewares/transaction";
 import { ChatsRepository } from "./chatsRepository";
 import { ChatsService } from "./chatsService";
 import { MyRequest } from "../common/requestDefinition";
+import { createGroupChatSchema } from "./schemas/createGroupChatSchema";
 
 export const router = express.Router();
 
@@ -45,6 +46,56 @@ router.get("/one-to-one", auth(), async (req, res) => {
       const chatsService = new ChatsService(chatsRepository);
 
       const userChats = await chatsService.getUserOneToOneChats(
+        (req as MyRequest).userId
+      );
+      if (!userChats) {
+        res.json({ success: false });
+      } else {
+        res.json({ userChats });
+      }
+    });
+    return userChats;
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false });
+  }
+});
+
+router.post(
+  "/group",
+  validation(createGroupChatSchema),
+  auth(),
+  async (req, res) => {
+    try {
+      await runInTransaction(async (connection) => {
+        const chatsRepository = new ChatsRepository(connection);
+        const chatsService = new ChatsService(chatsRepository);
+
+        const { name } = req.body;
+        const wasChatCreated = await chatsService.createGroupChat(
+          "vacation",
+          (req as MyRequest).userId
+        );
+        if (!wasChatCreated) {
+          res.json({ success: false });
+        } else {
+          res.json({ success: true });
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      res.json({ success: false });
+    }
+  }
+);
+
+router.get("/group", auth(), async (req, res) => {
+  try {
+    const userChats = await runInTransaction(async (connection) => {
+      const chatsRepository = new ChatsRepository(connection);
+      const chatsService = new ChatsService(chatsRepository);
+
+      const userChats = await chatsService.getUserGroupChats(
         (req as MyRequest).userId
       );
       if (!userChats) {

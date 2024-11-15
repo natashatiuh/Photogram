@@ -1,6 +1,7 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { v4 } from "uuid";
 import {
+  IGetChatParticipants,
   IGetOneToOneUserChatsQueryResults,
   IGetUserGroupChatsQueryResults,
 } from "./interfaces";
@@ -87,6 +88,7 @@ export class ChatsRepository {
         VALUES (?, ?, ?, ?, ?)
     `;
     const params = [chatId, "group", name, creatorId, todayDate];
+    await this.addParticipantToChat(chatId, creatorId, creatorId);
     const [rows] = await this.connection.execute(query, params);
     const resultSetHeader = rows as ResultSetHeader;
     if (resultSetHeader.affectedRows === 0) return false;
@@ -111,7 +113,39 @@ export class ChatsRepository {
       (chat) =>
         new GroupChatEntity(chat.id, chat.name, chat.creatorId, chat.createdAt)
     );
-
     return userChats;
+  }
+
+  async addParticipantToChat(
+    chatId: string,
+    participantId: string,
+    userId: string
+  ) {
+    const query = `
+        INSERT INTO group_chats_participants (participantId, chatId)
+        VALUES (?, ?)
+    `;
+    const params = [participantId, chatId];
+    const [rows] = await this.connection.execute(query, params);
+    const resultSetHeader = rows as ResultSetHeader;
+    if (resultSetHeader.affectedRows === 0) return false;
+    return true;
+  }
+
+  async getChatParticipants(chatId: string) {
+    const query = `
+        SELECT participantId
+        FROM group_chats_participants
+        WHERE chatId = ?
+    `;
+    const params = [chatId];
+    const [rows] = await this.connection.execute<IGetChatParticipants[]>(
+      query,
+      params
+    );
+    if (rows.length === 0)
+      throw new Error("There are NO perticipants in chat!");
+
+    return rows;
   }
 }

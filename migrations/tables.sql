@@ -21,13 +21,15 @@ CREATE TABLE `auth_credentials` (
   UNIQUE KEY `userName` (`userName`))
 
 
-  CREATE TABLE `photos` (
+  CREATE TABLE `posts` (
   `id` varchar(255) NOT NULL,
+  `type` enum('photo','video') NOT NULL,
   `userId` varchar(255) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `likes` int DEFAULT NULL,
   `markedUsers` tinyint(1) DEFAULT NULL,
   `archived` tinyint(1) DEFAULT NULL,
+  `views`int DEFAULT NULL,
   `sharings` int DEFAULT NULL,
   `savings` int DEFAULT NULL,
   `dateOfPublishing` datetime NOT NULL,
@@ -40,22 +42,9 @@ CREATE TABLE `follows` (
   `followDate` datetime NOT NULL)
 
 
-  CREATE TABLE `videos` (
-  `id` varchar(255) NOT NULL,
-  `userId` varchar(255) NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `likes` int DEFAULT NULL,
-  `markedUsers` tinyint(1) DEFAULT NULL,
-  `archieved` tinyint(1) DEFAULT NULL,
-  `sharings` int DEFAULT NULL,
-  `savings` int DEFAULT NULL,
-  `dateOfPublishing` datetime NOT NULL,
-  UNIQUE KEY `id` (`id`))
-
-
   CREATE TABLE `likes` (
   `id` varchar(255) NOT NULL,
-  `contentId` varchar(255) NOT NULL,
+  `postId` varchar(255) NOT NULL,
   `likedBy` varchar(255) NOT NULL,
   `date` datetime NOT NULL,
   UNIQUE KEY `id` (`id`))
@@ -63,11 +52,37 @@ CREATE TABLE `follows` (
 
   CREATE TABLE `marked_users` (
   `userId` varchar(255) NOT NULL,
-  `contentId` varchar(255) NOT NULL)
+  `postId` varchar(255) NOT NULL)
 
 
   CREATE TABLE `saved_content` (
   `id` varchar(255) NOT NULL,
-  `contentId` varchar(255) NOT NULL,
+  `postId` varchar(255) NOT NULL,
   `saverId` varchar(255) NOT NULL,
   UNIQUE KEY `id` (`id`))
+
+  CREATE TABLE `chats` (
+    `id` varchar(255) NOT NULL,
+    `type` enum('one-to-one','group') NOT NULL,
+    `name` varchar(255) DEFAULT NULL,
+    `creatorId` varchar(255) DEFAULT NULL,
+    `user1` varchar(255) DEFAULT NULL,
+    `user2` varchar(255) DEFAULT NULL,
+    `createdAt` datetime NOT NULL
+  )
+
+  CREATE TABLE `messages` (
+    `id` varchar(255) NOT NULL,
+    `chatId` varchar(255) NOT NULL,
+    `senderId` varchar(255) NOT NULL,
+    `type` enum('text','photo','video','shared_post') NOT NULL,
+    `textContent` varchar(255) DEFAULT NULL,
+    `mediaURL` varchar(255) DEFAULT NULL,
+    `sharedPostId` varchar(255) DEFAULT NULL,
+    `sentAt` datetime NOT NULL
+  )
+
+  CREATE TABLE `group_chats_participants` (
+    `participantId` varchar(255) NOT NULL,
+    `chatId` varchar(255) NOT NULL
+  )

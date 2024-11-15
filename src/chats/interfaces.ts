@@ -13,3 +13,7 @@ export interface IGetUserGroupChatsQueryResults extends RowDataPacket {
   creatorId: string;
   createdAt: Date;
 }
+
+export interface IGetChatParticipants extends RowDataPacket {
+  participantId: string;
+}

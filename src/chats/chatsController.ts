@@ -7,6 +7,7 @@ import { ChatsRepository } from "./chatsRepository";
 import { ChatsService } from "./chatsService";
 import { MyRequest } from "../common/requestDefinition";
 import { createGroupChatSchema } from "./schemas/createGroupChatSchema";
+import { addParticipantToChatSchema } from "./schemas/addParticipantToChatSchema";
 
 export const router = express.Router();
 
@@ -110,3 +111,32 @@ router.get("/group", auth(), async (req, res) => {
     res.json({ success: false });
   }
 });
+
+router.post(
+  "/add-participant",
+  validation(addParticipantToChatSchema),
+  auth(),
+  async (req, res) => {
+    try {
+      await runInTransaction(async (connection) => {
+        const chatsRepository = new ChatsRepository(connection);
+        const chatsService = new ChatsService(chatsRepository);
+
+        const { chatId, participantId } = req.body;
+        const wasParticipantAdded = await chatsService.addParticipantToChat(
+          chatId,
+          participantId,
+          (req as MyRequest).userId
+        );
+        if (!wasParticipantAdded) {
+          res.json({ success: false });
+        } else {
+          res.json({ success: true });
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      res.json({ success: false });
+    }
+  }
+);

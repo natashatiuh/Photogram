@@ -33,4 +33,24 @@ export class ChatsService {
     const userChats = await this.chatsRepository.getUserGroupChats(userId);
     return userChats;
   }
+
+  async addParticipantToChat(
+    chatId: string,
+    participantId: string,
+    userId: string
+  ) {
+    const wasParticipantAdded = await this.chatsRepository.addParticipantToChat(
+      chatId,
+      participantId,
+      userId
+    );
+    return wasParticipantAdded;
+  }
+
+  async getChatParticipants(chatId: string) {
+    const chatParticipants = await this.chatsRepository.getChatParticipants(
+      chatId
+    );
+    return chatParticipants;
+  }
 }

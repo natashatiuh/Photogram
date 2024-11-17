@@ -160,5 +160,33 @@ describe("Photos Service", () => {
     expect(updatedChatParticipants.length).toEqual(1);
   });
 
+  test("chat name should be changed", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+
+    const userData = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const tokens = await authService.signUpUser(userData);
+    const userId = await authService.verifyToken(tokens.accessToken);
+    await chatsService.createGroupChat("Classmates group", userId);
+    const chat = await chatsService.getUserGroupChats(userId);
+    const chatId = chat[0]?.id;
+    const chatName = chat[0]?.name;
+    if (chatId === undefined || chatName === undefined) return;
+    await chatsService.editGroupChatName("New Year Chat", chatId, userId);
+    const editedChat = await chatsService.getUserGroupChats(userId);
+    const editedChatId = editedChat[0]?.id;
+    const editedChatName = editedChat[0]?.name;
+    if (editedChatId === undefined || editedChatName === undefined) return;
+
+    expect(chatName).toEqual("Classmates group");
+    expect(editedChatName).toEqual("New Year Chat");
+  });
+
   //there are should be a test which check if the first message in chat was added to messages table
 });

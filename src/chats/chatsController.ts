@@ -9,6 +9,7 @@ import { MyRequest } from "../common/requestDefinition";
 import { createGroupChatSchema } from "./schemas/createGroupChatSchema";
 import { addParticipantToChatSchema } from "./schemas/addParticipantToChatSchema";
 import { deleteParticipantFromChatSchema } from "./schemas/deleteParticipantFromChatSchema";
+import { editGroupChatNameSchema } from "./schemas/editGroupChatNameSchema";
 
 export const router = express.Router();
 
@@ -160,6 +161,35 @@ router.delete(
             (req as MyRequest).userId
           );
         if (!wasParticipantDeleted) {
+          res.json({ success: false });
+        } else {
+          res.json({ success: true });
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      res.json({ success: false });
+    }
+  }
+);
+
+router.patch(
+  "/chat-name",
+  validation(editGroupChatNameSchema),
+  auth(),
+  async (req, res) => {
+    try {
+      await runInTransaction(async (connection) => {
+        const chatsRepository = new ChatsRepository(connection);
+        const chatsService = new ChatsService(chatsRepository);
+
+        const { newName, chatId } = req.body;
+        const wasChatNameChanged = await chatsService.editGroupChatName(
+          newName,
+          chatId,
+          (req as MyRequest).userId
+        );
+        if (!wasChatNameChanged) {
           res.json({ success: false });
         } else {
           res.json({ success: true });

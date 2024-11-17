@@ -67,4 +67,13 @@ export class ChatsService {
       );
     return wasParticipantDeleted;
   }
+
+  async editGroupChatName(newName: string, chatId: string, creatorId: string) {
+    const wasChatNameChanged = await this.chatsRepository.editGroupChatName(
+      newName,
+      chatId,
+      creatorId
+    );
+    return wasChatNameChanged;
+  }
 }

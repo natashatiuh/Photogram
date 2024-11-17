@@ -8,6 +8,7 @@ import { ChatsService } from "./chatsService";
 import { MyRequest } from "../common/requestDefinition";
 import { createGroupChatSchema } from "./schemas/createGroupChatSchema";
 import { addParticipantToChatSchema } from "./schemas/addParticipantToChatSchema";
+import { deleteParticipantFromChatSchema } from "./schemas/deleteParticipantFromChatSchema";
 
 export const router = express.Router();
 
@@ -74,7 +75,7 @@ router.post(
 
         const { name } = req.body;
         const wasChatCreated = await chatsService.createGroupChat(
-          "vacation",
+          name,
           (req as MyRequest).userId
         );
         if (!wasChatCreated) {
@@ -129,6 +130,36 @@ router.post(
           (req as MyRequest).userId
         );
         if (!wasParticipantAdded) {
+          res.json({ success: false });
+        } else {
+          res.json({ success: true });
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      res.json({ success: false });
+    }
+  }
+);
+
+router.delete(
+  "/participant",
+  validation(deleteParticipantFromChatSchema),
+  auth(),
+  async (req, res) => {
+    try {
+      await runInTransaction(async (connection) => {
+        const chatsRepository = new ChatsRepository(connection);
+        const chatsService = new ChatsService(chatsRepository);
+
+        const { chatId, participantId } = req.body;
+        const wasParticipantDeleted =
+          await chatsService.deleteParticipantFromChat(
+            chatId,
+            participantId,
+            (req as MyRequest).userId
+          );
+        if (!wasParticipantDeleted) {
           res.json({ success: false });
         } else {
           res.json({ success: true });

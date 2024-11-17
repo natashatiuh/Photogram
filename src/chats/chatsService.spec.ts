@@ -123,5 +123,42 @@ describe("Photos Service", () => {
     expect(chatParticipants.length).toEqual(2);
   });
 
+  test("participant should be deleted from the chat", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+
+    const userData1 = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user2@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const tokens1 = await authService.signUpUser(userData1);
+    const tokens2 = await authService.signUpUser(userData2);
+    const userId1 = await authService.verifyToken(tokens1.accessToken);
+    const userId2 = await authService.verifyToken(tokens2.accessToken);
+    await chatsService.createGroupChat("Classmates group", userId1);
+    const chat = await chatsService.getUserGroupChats(userId1);
+    const chatId = chat[0]?.id;
+    if (chatId === undefined) return;
+    await chatsService.addParticipantToChat(chatId, userId2, userId1);
+    const chatParticipants = await chatsService.getChatParticipants(chatId);
+    await chatsService.deleteParticipantFromChat(chatId, userId2, userId1);
+    const updatedChatParticipants = await chatsService.getChatParticipants(
+      chatId
+    );
+
+    expect(chatParticipants.length).toEqual(2);
+    expect(updatedChatParticipants.length).toEqual(1);
+  });
+
   //there are should be a test which check if the first message in chat was added to messages table
 });

@@ -84,5 +84,6 @@ CREATE TABLE `follows` (
 
   CREATE TABLE `group_chats_participants` (
     `participantId` varchar(255) NOT NULL,
-    `chatId` varchar(255) NOT NULL
+    `chatId` varchar(255) NOT NULL,
+    `creatorId` varchar(255) NOT NULL
   )

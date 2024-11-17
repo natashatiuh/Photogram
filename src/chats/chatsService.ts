@@ -37,12 +37,12 @@ export class ChatsService {
   async addParticipantToChat(
     chatId: string,
     participantId: string,
-    userId: string
+    chatCreatorId: string
   ) {
     const wasParticipantAdded = await this.chatsRepository.addParticipantToChat(
       chatId,
       participantId,
-      userId
+      chatCreatorId
     );
     return wasParticipantAdded;
   }
@@ -52,5 +52,19 @@ export class ChatsService {
       chatId
     );
     return chatParticipants;
+  }
+
+  async deleteParticipantFromChat(
+    chatId: string,
+    participantId: string,
+    chatCreatorId: string
+  ) {
+    const wasParticipantDeleted =
+      await this.chatsRepository.deleteParticipantFromChat(
+        chatId,
+        participantId,
+        chatCreatorId
+      );
+    return wasParticipantDeleted;
   }
 }

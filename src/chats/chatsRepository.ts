@@ -119,13 +119,13 @@ export class ChatsRepository {
   async addParticipantToChat(
     chatId: string,
     participantId: string,
-    userId: string
+    chatCreatorId: string
   ) {
     const query = `
-        INSERT INTO group_chats_participants (participantId, chatId)
-        VALUES (?, ?)
+        INSERT INTO group_chats_participants (participantId, chatId, creatorId)
+        VALUES (?, ?, ?)
     `;
-    const params = [participantId, chatId];
+    const params = [participantId, chatId, chatCreatorId];
     const [rows] = await this.connection.execute(query, params);
     const resultSetHeader = rows as ResultSetHeader;
     if (resultSetHeader.affectedRows === 0) return false;
@@ -147,5 +147,21 @@ export class ChatsRepository {
       throw new Error("There are NO perticipants in chat!");
 
     return rows;
+  }
+
+  async deleteParticipantFromChat(
+    chatId: string,
+    participantId: string,
+    chatCreatorId: string
+  ) {
+    const query = `
+        DELETE FROM group_chats_participants
+        WHERE chatId = ? AND participantId = ? AND creatorId = ?
+    `;
+    const params = [chatId, participantId, chatCreatorId];
+    const [rows] = await this.connection.execute(query, params);
+    const resultSetHeader = rows as ResultSetHeader;
+    if (resultSetHeader.affectedRows === 0) return false;
+    return true;
   }
 }

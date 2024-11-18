@@ -65,6 +65,7 @@ CREATE TABLE `follows` (
     `id` varchar(255) NOT NULL,
     `type` enum('one-to-one','group') NOT NULL,
     `name` varchar(255) DEFAULT NULL,
+    `cover` varchar(255) DEFAULT NULL,
     `creatorId` varchar(255) DEFAULT NULL,
     `user1` varchar(255) DEFAULT NULL,
     `user2` varchar(255) DEFAULT NULL,

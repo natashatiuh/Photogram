@@ -111,7 +111,13 @@ export class ChatsRepository {
 
     const userChats = rows.map(
       (chat) =>
-        new GroupChatEntity(chat.id, chat.name, chat.creatorId, chat.createdAt)
+        new GroupChatEntity(
+          chat.id,
+          chat.name,
+          chat.cover,
+          chat.creatorId,
+          chat.createdAt
+        )
     );
     return userChats;
   }
@@ -172,6 +178,19 @@ export class ChatsRepository {
         WHERE id = ? AND creatorId = ?
     `;
     const params = [newName, chatId, creatorId];
+    const [rows] = await this.connection.execute(query, params);
+    const resultSetHeader = rows as ResultSetHeader;
+    if (resultSetHeader.affectedRows === 0) return false;
+    return true;
+  }
+
+  async addChatCover(chatId: string, cover: string, userId: string) {
+    const query = `
+        UPDATE chats
+        SET cover = ?
+        WHERE id = ? AND creatorId = ?
+    `;
+    const params = [cover, chatId, userId];
     const [rows] = await this.connection.execute(query, params);
     const resultSetHeader = rows as ResultSetHeader;
     if (resultSetHeader.affectedRows === 0) return false;

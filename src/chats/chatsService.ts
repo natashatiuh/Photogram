@@ -76,4 +76,13 @@ export class ChatsService {
     );
     return wasChatNameChanged;
   }
+
+  async addChatCover(chatId: string, cover: string, userId: string) {
+    const wasCoverAdded = await this.chatsRepository.addChatCover(
+      chatId,
+      cover,
+      userId
+    );
+    return wasCoverAdded;
+  }
 }

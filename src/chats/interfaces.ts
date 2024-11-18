@@ -10,6 +10,7 @@ export interface IGetOneToOneUserChatsQueryResults extends RowDataPacket {
 export interface IGetUserGroupChatsQueryResults extends RowDataPacket {
   id: string;
   name: string;
+  cover: string;
   creatorId: string;
   createdAt: Date;
 }

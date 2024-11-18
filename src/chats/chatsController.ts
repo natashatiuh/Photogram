@@ -1,4 +1,6 @@
 import express from "express";
+import multer from "multer";
+import path from "path";
 import { validation } from "../common/middlewares/validation";
 import { createOneToOneChatSchema } from "./schemas/createOneToOneChatSchema";
 import { auth } from "../common/middlewares/auth";
@@ -10,6 +12,21 @@ import { createGroupChatSchema } from "./schemas/createGroupChatSchema";
 import { addParticipantToChatSchema } from "./schemas/addParticipantToChatSchema";
 import { deleteParticipantFromChatSchema } from "./schemas/deleteParticipantFromChatSchema";
 import { editGroupChatNameSchema } from "./schemas/editGroupChatNameSchema";
+import { addChatCoverSchema } from "./schemas/addChatCoverSchema";
+import { v4 } from "uuid";
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "images/chats-covers");
+  },
+  filename: (req, file, cb) => {
+    cb(null, v4() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage: storage,
+});
 
 export const router = express.Router();
 
@@ -190,6 +207,38 @@ router.patch(
           (req as MyRequest).userId
         );
         if (!wasChatNameChanged) {
+          res.json({ success: false });
+        } else {
+          res.json({ success: true });
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      res.json({ success: false });
+    }
+  }
+);
+
+router.patch(
+  "/add-cover",
+  validation(addChatCoverSchema),
+  auth(),
+  upload.single("cover"),
+  async (req, res) => {
+    try {
+      await runInTransaction(async (connection) => {
+        const chatsRepository = new ChatsRepository(connection);
+        const chatsService = new ChatsService(chatsRepository);
+
+        const cover = req.file?.filename;
+        if (cover === undefined) return;
+        const { chatId } = req.body;
+        const wasCoverAdded = await chatsService.addChatCover(
+          chatId,
+          cover,
+          (req as MyRequest).userId
+        );
+        if (!wasCoverAdded) {
           res.json({ success: false });
         } else {
           res.json({ success: true });

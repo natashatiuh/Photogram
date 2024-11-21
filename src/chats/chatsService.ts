@@ -85,4 +85,12 @@ export class ChatsService {
     );
     return wasCoverChanged;
   }
+
+  async deleteChatCover(chatId: string, userId: string) {
+    const wasCoverDeleted = await this.chatsRepository.deleteChatCover(
+      chatId,
+      userId
+    );
+    return wasCoverDeleted;
+  }
 }

@@ -246,4 +246,33 @@ describe("Photos Service", () => {
     expect(cover).toEqual("cover1");
     expect(updatedCover).toEqual("cover2");
   });
+
+  test("chat cover should be added", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+
+    const userData = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const tokens = await authService.signUpUser(userData);
+    const userId = await authService.verifyToken(tokens.accessToken);
+    await chatsService.createGroupChat("Classmates group", userId);
+    const chat = await chatsService.getUserGroupChats(userId);
+    const chatId = chat[0]?.id;
+    if (chatId === undefined) throw new Error("ChatId shouldn't be undefined!");
+    await chatsService.changeChatCover(chatId, "cover1", userId);
+    const updatedChat = await chatsService.getUserGroupChats(userId);
+    const cover = updatedChat[0]?.cover;
+    if (cover === undefined) throw new Error("Cover shouldn't be undefined!");
+    await chatsService.deleteChatCover(chatId, userId);
+    const deletedCoverChat = await chatsService.getUserGroupChats(userId);
+    const deletedCover = deletedCoverChat[0]?.cover;
+
+    expect(cover).toEqual("cover1");
+    expect(deletedCover).toEqual(null);
+  });
 });

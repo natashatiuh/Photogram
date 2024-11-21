@@ -196,4 +196,17 @@ export class ChatsRepository {
     if (resultSetHeader.affectedRows === 0) return false;
     return true;
   }
+
+  async deleteChatCover(chatId: string, userId: string) {
+    const query = `
+        UPDATE chats
+        SET cover = NULL
+        WHERE id = ? AND creatorId = ?
+    `;
+    const params = [chatId, userId];
+    const [rows] = await this.connection.execute(query, params);
+    const resultSetHeader = rows as ResultSetHeader;
+    if (resultSetHeader.affectedRows === 0) return false;
+    return true;
+  }
 }

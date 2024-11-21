@@ -14,6 +14,7 @@ import { deleteParticipantFromChatSchema } from "./schemas/deleteParticipantFrom
 import { editGroupChatNameSchema } from "./schemas/editGroupChatNameSchema";
 import { changeChatCoverSchema } from "./schemas/changeChatCover";
 import { v4 } from "uuid";
+import { deleteChatCoverSchema } from "./schemas/deleteChatCoverSchema";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -220,7 +221,7 @@ router.patch(
 );
 
 router.patch(
-  "/chat-cover",
+  "/change-cover",
   validation(changeChatCoverSchema),
   auth(),
   upload.single("cover"),
@@ -233,12 +234,40 @@ router.patch(
         const cover = req.file?.filename;
         if (cover === undefined) return;
         const { chatId } = req.body;
-        const wasCoverAdded = await chatsService.changeChatCover(
+        const wasCoverChanged = await chatsService.changeChatCover(
           chatId,
           cover,
           (req as MyRequest).userId
         );
-        if (!wasCoverAdded) {
+        if (!wasCoverChanged) {
+          res.json({ success: false });
+        } else {
+          res.json({ success: true });
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      res.json({ success: false });
+    }
+  }
+);
+
+router.patch(
+  "/delete-cover",
+  validation(deleteChatCoverSchema),
+  auth(),
+  async (req, res) => {
+    try {
+      await runInTransaction(async (connection) => {
+        const chatsRepository = new ChatsRepository(connection);
+        const chatsService = new ChatsService(chatsRepository);
+
+        const { chatId } = req.body;
+        const wasCoverDeleted = await chatsService.deleteChatCover(
+          chatId,
+          (req as MyRequest).userId
+        );
+        if (!wasCoverDeleted) {
           res.json({ success: false });
         } else {
           res.json({ success: true });

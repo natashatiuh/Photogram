@@ -77,12 +77,12 @@ export class ChatsService {
     return wasChatNameChanged;
   }
 
-  async addChatCover(chatId: string, cover: string, userId: string) {
-    const wasCoverAdded = await this.chatsRepository.addChatCover(
+  async changeChatCover(chatId: string, cover: string, userId: string) {
+    const wasCoverChanged = await this.chatsRepository.changeChatCover(
       chatId,
       cover,
       userId
     );
-    return wasCoverAdded;
+    return wasCoverChanged;
   }
 }

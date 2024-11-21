@@ -12,7 +12,7 @@ import { createGroupChatSchema } from "./schemas/createGroupChatSchema";
 import { addParticipantToChatSchema } from "./schemas/addParticipantToChatSchema";
 import { deleteParticipantFromChatSchema } from "./schemas/deleteParticipantFromChatSchema";
 import { editGroupChatNameSchema } from "./schemas/editGroupChatNameSchema";
-import { addChatCoverSchema } from "./schemas/addChatCoverSchema";
+import { changeChatCoverSchema } from "./schemas/changeChatCover";
 import { v4 } from "uuid";
 
 const storage = multer.diskStorage({
@@ -220,8 +220,8 @@ router.patch(
 );
 
 router.patch(
-  "/add-cover",
-  validation(addChatCoverSchema),
+  "/chat-cover",
+  validation(changeChatCoverSchema),
   auth(),
   upload.single("cover"),
   async (req, res) => {
@@ -233,7 +233,7 @@ router.patch(
         const cover = req.file?.filename;
         if (cover === undefined) return;
         const { chatId } = req.body;
-        const wasCoverAdded = await chatsService.addChatCover(
+        const wasCoverAdded = await chatsService.changeChatCover(
           chatId,
           cover,
           (req as MyRequest).userId

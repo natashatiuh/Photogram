@@ -116,7 +116,7 @@ describe("Photos Service", () => {
     await chatsService.createGroupChat("Classmates group", userId1);
     const chat = await chatsService.getUserGroupChats(userId1);
     const chatId = chat[0]?.id;
-    if (chatId === undefined) return;
+    if (chatId === undefined) throw new Error("ChatId shouldn't be undefined!");
     await chatsService.addParticipantToChat(chatId, userId2, userId1);
     const chatParticipants = await chatsService.getChatParticipants(chatId);
 
@@ -148,7 +148,7 @@ describe("Photos Service", () => {
     await chatsService.createGroupChat("Classmates group", userId1);
     const chat = await chatsService.getUserGroupChats(userId1);
     const chatId = chat[0]?.id;
-    if (chatId === undefined) return;
+    if (chatId === undefined) throw new Error("ChatId shouldn't be undefined!");
     await chatsService.addParticipantToChat(chatId, userId2, userId1);
     const chatParticipants = await chatsService.getChatParticipants(chatId);
     await chatsService.deleteParticipantFromChat(chatId, userId2, userId1);
@@ -177,12 +177,14 @@ describe("Photos Service", () => {
     const chat = await chatsService.getUserGroupChats(userId);
     const chatId = chat[0]?.id;
     const chatName = chat[0]?.name;
-    if (chatId === undefined || chatName === undefined) return;
+    if (chatId === undefined || chatName === undefined)
+      throw new Error("ChatId or ChatName shouldn't be undefined!");
     await chatsService.editGroupChatName("New Year Chat", chatId, userId);
     const editedChat = await chatsService.getUserGroupChats(userId);
     const editedChatId = editedChat[0]?.id;
     const editedChatName = editedChat[0]?.name;
-    if (editedChatId === undefined || editedChatName === undefined) return;
+    if (editedChatId === undefined || editedChatName === undefined)
+      throw new Error("ChatId or CharName shouldn't be undefined!");
 
     expect(chatName).toEqual("Classmates group");
     expect(editedChatName).toEqual("New Year Chat");
@@ -204,14 +206,44 @@ describe("Photos Service", () => {
     await chatsService.createGroupChat("Classmates group", userId);
     const chat = await chatsService.getUserGroupChats(userId);
     const chatId = chat[0]?.id;
-    if (chatId === undefined) return;
-    await chatsService.addChatCover(chatId, "cover1", userId);
+    if (chatId === undefined) throw new Error("ChatId shouldn't be undefined!");
+    await chatsService.changeChatCover(chatId, "cover1", userId);
     const updatedChat = await chatsService.getUserGroupChats(userId);
     const cover = updatedChat[0]?.cover;
-    if (cover === undefined) return;
+    if (cover === undefined) throw new Error("Cover shouldn't be undefined!");
 
     expect(cover).toEqual("cover1");
   });
 
-  //there are should be a test which check if the first message in chat was added to messages table
+  test("chat cover should be changed", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+
+    const userData = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const tokens = await authService.signUpUser(userData);
+    const userId = await authService.verifyToken(tokens.accessToken);
+    await chatsService.createGroupChat("Classmates group", userId);
+    const chat = await chatsService.getUserGroupChats(userId);
+    const chatId = chat[0]?.id;
+    if (chatId === undefined) throw new Error("ChatId shouldn't be undefined!");
+    await chatsService.changeChatCover(chatId, "cover1", userId);
+    const changedChat = await chatsService.getUserGroupChats(userId);
+    const cover = changedChat[0]?.cover;
+    if (cover === undefined) throw new Error("Cover shouldn't be undefined!");
+    console.log(`Updating cover for chatId: ${chatId}, new cover: ${cover}`);
+    await chatsService.changeChatCover(chatId, "cover2", userId);
+    const updatedCoverChat = await chatsService.getUserGroupChats(userId);
+    const updatedCover = updatedCoverChat[0]?.cover;
+    if (updatedCover === undefined)
+      throw new Error("Cover shouldn't be undefined!");
+
+    expect(cover).toEqual("cover1");
+    expect(updatedCover).toEqual("cover2");
+  });
 });

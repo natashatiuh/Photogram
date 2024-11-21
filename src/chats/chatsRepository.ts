@@ -97,7 +97,7 @@ export class ChatsRepository {
 
   async getUserGroupChats(userId: string) {
     const query = `
-        SELECT id, name, creatorId, createdAt
+        SELECT id, name, cover, creatorId, createdAt
         FROM chats 
         WHERE creatorId = ?
     `;
@@ -184,7 +184,7 @@ export class ChatsRepository {
     return true;
   }
 
-  async addChatCover(chatId: string, cover: string, userId: string) {
+  async changeChatCover(chatId: string, cover: string, userId: string) {
     const query = `
         UPDATE chats
         SET cover = ?

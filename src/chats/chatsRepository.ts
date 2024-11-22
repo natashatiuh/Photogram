@@ -1,12 +1,15 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { v4 } from "uuid";
 import {
-  IGetChatParticipants,
+  IGetChatDetailsQueryResults,
+  IGetChatIdQueryResults,
+  IGetChatParticipantsQueryResults,
   IGetOneToOneUserChatsQueryResults,
   IGetUserGroupChatsQueryResults,
 } from "./interfaces";
 import { OneToOneChatEntity } from "./entities/oneToOneChatEntity";
 import { GroupChatEntity } from "./entities/groupChatEntity";
+import { ChatEntity } from "./entities/chatEntity";
 
 export class ChatsRepository {
   constructor(private connection: PoolConnection) {}
@@ -96,20 +99,30 @@ export class ChatsRepository {
   }
 
   async getUserGroupChats(userId: string) {
-    const query = `
-        SELECT id, name, cover, creatorId, createdAt
-        FROM chats 
-        WHERE creatorId = ?
+    const queryParticipants = `
+        SELECT chatId 
+        FROM group_chats_participants
+        WHERE participantId = ?
     `;
-    //i need to check chatparticipants table
-    const params = [userId];
-    const [rows] = await this.connection.execute<
-      IGetUserGroupChatsQueryResults[]
-    >(query, params);
-
+    const paramsParticipants = [userId];
+    const [rows] = await this.connection.execute<IGetChatIdQueryResults[]>(
+      queryParticipants,
+      paramsParticipants
+    );
     if (rows.length === 0) throw new Error("There are no group chats!");
 
-    const userChats = rows.map(
+    const chatIds = rows.map((row) => row.chatId);
+    const queryChats = `
+        SELECT id, name, cover, creatorId, createdAt
+        FROM chats
+        WHERE id IN (${chatIds.map(() => "?").join(", ")})
+    `;
+
+    const [chatRows] = await this.connection.execute<
+      IGetUserGroupChatsQueryResults[]
+    >(queryChats, chatIds);
+
+    const userChats = chatRows.map(
       (chat) =>
         new GroupChatEntity(
           chat.id,
@@ -119,6 +132,7 @@ export class ChatsRepository {
           chat.createdAt
         )
     );
+    console.log(userChats);
     return userChats;
   }
 
@@ -145,10 +159,9 @@ export class ChatsRepository {
         WHERE chatId = ?
     `;
     const params = [chatId];
-    const [rows] = await this.connection.execute<IGetChatParticipants[]>(
-      query,
-      params
-    );
+    const [rows] = await this.connection.execute<
+      IGetChatParticipantsQueryResults[]
+    >(query, params);
     if (rows.length === 0)
       throw new Error("There are NO perticipants in chat!");
 
@@ -208,5 +221,70 @@ export class ChatsRepository {
     const resultSetHeader = rows as ResultSetHeader;
     if (resultSetHeader.affectedRows === 0) return false;
     return true;
+  }
+
+  async getAllChats(userId: string) {
+    const oneToOneChatIds = await this.getOneToOneChatIds(userId);
+    const groupChatIds = await this.getGroupChatIds(userId);
+    const allChatIds = [...oneToOneChatIds, ...groupChatIds];
+    if (allChatIds.length === 0) {
+      throw new Error("There are no chats!");
+    }
+    console.log(allChatIds);
+
+    const chatsQuery = `
+        SELECT id, type, name, cover, creatorId, user1, user2, createdAt 
+        FROM chats
+        WHERE id IN (${allChatIds.map(() => "?").join(", ")})
+    `;
+    const [chats] = await this.connection.execute<
+      IGetChatDetailsQueryResults[]
+    >(chatsQuery, allChatIds);
+
+    const userChats = chats.map(
+      (chat) =>
+        new ChatEntity(
+          chat.id,
+          chat.type,
+          chat.createdAt,
+          chat.name,
+          chat.cover,
+          chat.creatorId,
+          chat.user1,
+          chat.user2
+        )
+    );
+    console.log(userChats);
+    return userChats;
+  }
+
+  async getOneToOneChatIds(userId: string) {
+    const query = `
+        SELECT id as chatId
+        FROM chats
+        WHERE user1 = ? OR user2 = ? AND type = "one-to-one"
+    `;
+    const params = [userId, userId];
+    const [rows] = await this.connection.execute<IGetChatIdQueryResults[]>(
+      query,
+      params
+    );
+    const oneToOneChatIds = rows.map((row) => row.chatId);
+    return oneToOneChatIds;
+  }
+
+  async getGroupChatIds(userId: string) {
+    const query = `
+        SELECT chatId
+        FROM group_chats_participants
+        WHERE participantId = ?
+    `;
+    const params = [userId];
+    const [rows] = await this.connection.execute<IGetChatIdQueryResults[]>(
+      query,
+      params
+    );
+    const groupChatIds = rows.map((row) => row.chatId);
+    return groupChatIds;
   }
 }

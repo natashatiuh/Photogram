@@ -93,4 +93,9 @@ export class ChatsService {
     );
     return wasCoverDeleted;
   }
+
+  async getAllChats(userId: string) {
+    const userChats = await this.chatsRepository.getAllChats(userId);
+    return userChats;
+  }
 }

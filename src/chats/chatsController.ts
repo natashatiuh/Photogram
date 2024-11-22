@@ -279,3 +279,25 @@ router.patch(
     }
   }
 );
+
+router.get("/all-chats", auth(), async (req, res) => {
+  try {
+    const userChats = await runInTransaction(async (connection) => {
+      const chatsRepository = new ChatsRepository(connection);
+      const chatsService = new ChatsService(chatsRepository);
+
+      const userChats = await chatsService.getAllChats(
+        (req as MyRequest).userId
+      );
+      if (!userChats) {
+        res.json({ success: false });
+      } else {
+        res.json({ userChats });
+      }
+    });
+    return userChats;
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false });
+  }
+});

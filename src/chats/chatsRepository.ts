@@ -146,9 +146,29 @@ export class ChatsRepository {
         VALUES (?, ?, ?)
     `;
     const params = [participantId, chatId, chatCreatorId];
+    const isParticipantInTheChat = await this.checkIfParticipantInChat(
+      participantId,
+      chatId
+    );
+    if (isParticipantInTheChat)
+      throw new Error("This user is already in the chat!");
     const [rows] = await this.connection.execute(query, params);
     const resultSetHeader = rows as ResultSetHeader;
     if (resultSetHeader.affectedRows === 0) return false;
+    return true;
+  }
+
+  async checkIfParticipantInChat(participantId: string, chatId: string) {
+    const query = `
+        SELECT participantId
+        FROM group_chats_participants
+        WHERE participantId = ? AND chatId = ?
+    `;
+    const params = [participantId, chatId];
+    const [rows] = await this.connection.execute<
+      IGetChatParticipantsQueryResults[]
+    >(query, params);
+    if (rows.length === 0) return false;
     return true;
   }
 
@@ -178,6 +198,12 @@ export class ChatsRepository {
         WHERE chatId = ? AND participantId = ? AND creatorId = ?
     `;
     const params = [chatId, participantId, chatCreatorId];
+    const isParticipantInTheChat = await this.checkIfParticipantInChat(
+      participantId,
+      chatId
+    );
+    if (!isParticipantInTheChat)
+      throw new Error("This user is NOT in the chat!");
     const [rows] = await this.connection.execute(query, params);
     const resultSetHeader = rows as ResultSetHeader;
     if (resultSetHeader.affectedRows === 0) return false;

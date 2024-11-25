@@ -68,6 +68,14 @@ export class ChatsService {
     return wasParticipantDeleted;
   }
 
+  async leaveGroupChat(chatId: string, userId: string) {
+    const didUserLeaveTheChat = await this.chatsRepository.leaveGroupChat(
+      chatId,
+      userId
+    );
+    return didUserLeaveTheChat;
+  }
+
   async editGroupChatName(newName: string, chatId: string, creatorId: string) {
     const wasChatNameChanged = await this.chatsRepository.editGroupChatName(
       newName,

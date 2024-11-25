@@ -25,8 +25,14 @@ export class ChatsRepository {
         INSERT INTO chats (id, type, user1, user2, createdAt) 
         VALUES (?, ?, ?, ?, ?)
     `;
-    const params = [chatId, "one-to-one", senderId, recipientId, todayDate];
 
+    const isChatExist = await this.checkIfOneToOneChatExists(
+      senderId,
+      recipientId
+    );
+    if (isChatExist)
+      throw new Error("The chat between users is already exist!");
+    const params = [chatId, "one-to-one", senderId, recipientId, todayDate];
     const addingFirstMessage = await this.addFirstMessage(
       chatId,
       senderId,
@@ -39,6 +45,21 @@ export class ChatsRepository {
     const [rows] = await this.connection.execute(query, params);
     const resultSetHeader = rows as ResultSetHeader;
     if (resultSetHeader.affectedRows === 0) return false;
+    return true;
+  }
+
+  async checkIfOneToOneChatExists(userId1: string, userId2: string) {
+    const query = `
+        SELECT id
+        FROM chats
+        WHERE type = ? AND user1 = ? OR user2 = ? AND user1 = ? OR user2 = ?
+    `;
+    const params = ["one-to-one", userId1, userId2, userId2, userId1];
+    const [rows] = await this.connection.execute<IGetChatIdQueryResults[]>(
+      query,
+      params
+    );
+    if (rows.length === 0) return false;
     return true;
   }
 
@@ -77,7 +98,13 @@ export class ChatsRepository {
 
     const userChats = rows.map(
       (chat) =>
-        new OneToOneChatEntity(chat.id, chat.user1, chat.user2, chat.createdAt)
+        new OneToOneChatEntity(
+          chat.id,
+          chat.type,
+          chat.user1,
+          chat.user2,
+          chat.createdAt
+        )
     );
 
     return userChats;
@@ -126,6 +153,7 @@ export class ChatsRepository {
       (chat) =>
         new GroupChatEntity(
           chat.id,
+          chat.type,
           chat.name,
           chat.cover,
           chat.creatorId,
@@ -207,6 +235,41 @@ export class ChatsRepository {
     const [rows] = await this.connection.execute(query, params);
     const resultSetHeader = rows as ResultSetHeader;
     if (resultSetHeader.affectedRows === 0) return false;
+    return true;
+  }
+
+  async leaveGroupChat(chatId: string, userId: string) {
+    const query = `
+        DELETE FROM group_chats_participants
+        WHERE chatId = ? AND participantId = ?
+    `;
+    const params = [chatId, userId];
+
+    const isUserChatCreator = await this.checkIfUserIsChatCreator(
+      chatId,
+      userId
+    );
+    if (isUserChatCreator)
+      throw new Error("Chat creator can NOT leave the chat!");
+
+    const [rows] = await this.connection.execute(query, params);
+    const resultSetHeader = rows as ResultSetHeader;
+    if (resultSetHeader.affectedRows < 0) return false;
+    return true;
+  }
+
+  async checkIfUserIsChatCreator(chatId: string, userId: string) {
+    const query = `
+        SELECT id
+        FROM chats
+        WHERE id = ? AND creatorId = ?
+    `;
+    const params = [chatId, userId];
+    const [rows] = await this.connection.execute<IGetChatIdQueryResults[]>(
+      query,
+      params
+    );
+    if (rows.length === 0) return false;
     return true;
   }
 

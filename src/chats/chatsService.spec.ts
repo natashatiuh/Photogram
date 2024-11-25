@@ -69,6 +69,37 @@ describe("Chats Service", () => {
     expect(user2Chats.length).toEqual(1);
   });
 
+  test("one-to-one chat should be only one between 2 users", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+
+    const userData1 = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user2@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+    await chatsService.createOneToOneChat(userId1, userId2, "Hello user2!");
+    const user1Chats = await chatsService.getUserOneToOneChats(userId1);
+    const user2Chats = await chatsService.getUserOneToOneChats(userId2);
+
+    expect(user1Chats.length).toEqual(1);
+    expect(user2Chats.length).toEqual(1);
+    await expect(
+      chatsService.createOneToOneChat(userId2, userId1, "Hello user1!")
+    ).rejects.toThrow("The chat between users is already exist!");
+  });
+
   test("group chat should be created", async () => {
     const authService = await createAuthService();
     const chatsService = await createChatsService();
@@ -194,6 +225,51 @@ describe("Chats Service", () => {
 
     expect(chatParticipants.length).toEqual(2);
     expect(updatedChatParticipants.length).toEqual(1);
+  });
+
+  test("participant should be deleted from the chat", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+
+    const userData1 = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user2@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const userData3 = new SignUpUserInput(
+      "user3@gmail.com",
+      "11111111",
+      "user3",
+      "User3",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+    const { userId: userId3 } = await authService.signUpUser(userData3);
+
+    await chatsService.createGroupChat("Classmates group", userId1);
+    const chat = await chatsService.getUserGroupChats(userId1);
+    const chatId = chat[0]?.id;
+    if (chatId === undefined) throw new Error("ChatId shouldn't be undefined!");
+
+    await chatsService.addParticipantToChat(chatId, userId2, userId1);
+    await chatsService.addParticipantToChat(chatId, userId3, userId1);
+    await chatsService.leaveGroupChat(chatId, userId2);
+    const chatParticipants = await chatsService.getChatParticipants(chatId);
+
+    expect(chatParticipants.length).toEqual(2);
+    await expect(chatsService.leaveGroupChat(chatId, userId1)).rejects.toThrow(
+      "Chat creator can NOT leave the chat!"
+    );
   });
 
   test("chat name should be changed", async () => {
@@ -347,7 +423,6 @@ describe("Chats Service", () => {
     const chatId1 = chat1.id;
     await chatsService.addParticipantToChat(chatId1, userId2, userId1);
 
-    await chatsService.createOneToOneChat(userId2, userId1, "Hello 2");
     await chatsService.createGroupChat("Hello 2", userId2);
     const user2GroupChats = await chatsService.getUserGroupChats(userId2);
     const user2Chat = user2GroupChats.find(
@@ -362,7 +437,7 @@ describe("Chats Service", () => {
     const user1Chats = await chatsService.getAllChats(userId1);
     const user2Chats = await chatsService.getAllChats(userId2);
 
-    expect(user1Chats.length).toEqual(4);
-    expect(user2Chats.length).toEqual(4);
+    expect(user1Chats.length).toEqual(3);
+    expect(user2Chats.length).toEqual(3);
   });
 });

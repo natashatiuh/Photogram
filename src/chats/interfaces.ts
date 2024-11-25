@@ -2,6 +2,7 @@ import { RowDataPacket } from "mysql2";
 
 export interface IGetOneToOneUserChatsQueryResults extends RowDataPacket {
   id: string;
+  type: string;
   user1: string;
   user2: string;
   createdAt: Date;
@@ -9,6 +10,7 @@ export interface IGetOneToOneUserChatsQueryResults extends RowDataPacket {
 
 export interface IGetUserGroupChatsQueryResults extends RowDataPacket {
   id: string;
+  type: string;
   name: string;
   cover: string;
   creatorId: string;

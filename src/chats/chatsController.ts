@@ -15,6 +15,7 @@ import { editGroupChatNameSchema } from "./schemas/editGroupChatNameSchema";
 import { changeChatCoverSchema } from "./schemas/changeChatCover";
 import { v4 } from "uuid";
 import { deleteChatCoverSchema } from "./schemas/deleteChatCoverSchema";
+import { leaveGroupChatSchema } from "./schemas/leaveGroupChatSchema";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -186,6 +187,33 @@ router.delete(
       });
     } catch (error) {
       console.log(error);
+      res.json({ success: false });
+    }
+  }
+);
+
+router.delete(
+  "/leave-chat",
+  validation(leaveGroupChatSchema),
+  auth(),
+  async (req, res) => {
+    try {
+      await runInTransaction(async (connection) => {
+        const chatsRepository = new ChatsRepository(connection);
+        const chatsService = new ChatsService(chatsRepository);
+
+        const { chatId } = req.body;
+        const didUserLeaveTheChat = await chatsService.leaveGroupChat(
+          chatId,
+          (req as MyRequest).userId
+        );
+        if (!didUserLeaveTheChat) {
+          res.json({ success: false });
+        } else {
+          res.json({ success: true });
+        }
+      });
+    } catch (error) {
       res.json({ success: false });
     }
   }

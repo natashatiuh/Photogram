@@ -440,4 +440,41 @@ describe("Chats Service", () => {
     expect(user1Chats.length).toEqual(3);
     expect(user2Chats.length).toEqual(3);
   });
+
+  test("group chat and its participants should be deleted", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+
+    const userData1 = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user2@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createGroupChat("Group Chat1", userId1);
+    await chatsService.createGroupChat("Group Chat2", userId1);
+    const [chat1, chat2] = await chatsService.getUserGroupChats(userId1);
+    if (chat1 === undefined) throw new Error("Chat shouldn't be undefined!");
+    if (chat2 === undefined) throw new Error("Chat shouldn't be undefined!");
+
+    await chatsService.addParticipantToChat(chat1.id, userId2, userId1);
+    await chatsService.addParticipantToChat(chat2.id, userId2, userId1);
+    await chatsService.deleteGroupChatPermanently(chat1.id, userId1);
+    const user1Chats = await chatsService.getUserGroupChats(userId1);
+    const chat2Participants = await chatsService.getChatParticipants(chat2.id);
+
+    expect(user1Chats.length).toEqual(1);
+    expect(chat2Participants.length).toEqual(2);
+  });
 });

@@ -16,6 +16,7 @@ import { changeChatCoverSchema } from "./schemas/changeChatCover";
 import { v4 } from "uuid";
 import { deleteChatCoverSchema } from "./schemas/deleteChatCoverSchema";
 import { leaveGroupChatSchema } from "./schemas/leaveGroupChatSchema";
+import { deleteGroupChatPermanentlySchema } from "./schemas/deleteGroupChatPermanentlySchema";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -329,3 +330,31 @@ router.get("/all-chats", auth(), async (req, res) => {
     res.json({ success: false });
   }
 });
+
+router.delete(
+  "/group-chat",
+  validation(deleteGroupChatPermanentlySchema),
+  auth(),
+  async (req, res) => {
+    try {
+      await runInTransaction(async (connection) => {
+        const chatsRepository = new ChatsRepository(connection);
+        const chatsService = new ChatsService(chatsRepository);
+
+        const { chatId } = req.body;
+        const wasChatDeleted = await chatsService.deleteGroupChatPermanently(
+          chatId,
+          (req as MyRequest).userId
+        );
+        if (!wasChatDeleted) {
+          res.json({ success: false });
+        } else {
+          res.json({ success: true });
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      res.json({ success: false });
+    }
+  }
+);

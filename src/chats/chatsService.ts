@@ -1,4 +1,5 @@
 import { ChatsRepository } from "./chatsRepository";
+import { deleteGroupChatPermanentlySchema } from "./schemas/deleteGroupChatPermanentlySchema";
 
 export class ChatsService {
   constructor(public chatsRepository: ChatsRepository) {}
@@ -105,5 +106,11 @@ export class ChatsService {
   async getAllChats(userId: string) {
     const userChats = await this.chatsRepository.getAllChats(userId);
     return userChats;
+  }
+
+  async deleteGroupChatPermanently(chatId: string, creatorId: string) {
+    const wasChatDeleted =
+      await this.chatsRepository.deleteGroupChatPermanently(chatId, creatorId);
+    return wasChatDeleted;
   }
 }

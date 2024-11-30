@@ -211,7 +211,7 @@ export class ChatsRepository {
       IGetChatParticipantsQueryResults[]
     >(query, params);
     if (rows.length === 0)
-      throw new Error("There are NO perticipants in chat!");
+      throw new Error("There are NO participants in chat!");
 
     return rows;
   }
@@ -375,5 +375,30 @@ export class ChatsRepository {
     );
     const groupChatIds = rows.map((row) => row.chatId);
     return groupChatIds;
+  }
+
+  async deleteGroupChatPermanently(chatId: string, creatorId: string) {
+    const query = `
+        DELETE FROM chats
+        WHERE id = ? AND creatorId = ?
+    `;
+    const params = [chatId, creatorId];
+    const [rows] = await this.connection.execute(query, params);
+    await this.deleteParticipantsFromDeletedChat(chatId);
+    const resultSetHeader = rows as ResultSetHeader;
+    if (resultSetHeader.affectedRows === 0) return false;
+    return true;
+  }
+
+  async deleteParticipantsFromDeletedChat(chatId: string) {
+    const query = `
+        DELETE FROM group_chats_participants
+        WHERE chatId = ?
+    `;
+    const params = [chatId];
+    const [rows] = await this.connection.execute(query, params);
+    const resultSetHeader = rows as ResultSetHeader;
+    if (resultSetHeader.affectedRows === 0) return false;
+    return true;
   }
 }

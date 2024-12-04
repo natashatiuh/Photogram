@@ -1,18 +1,12 @@
 import { ChatsRepository } from "./chatsRepository";
-import { deleteGroupChatPermanentlySchema } from "./schemas/deleteGroupChatPermanentlySchema";
 
 export class ChatsService {
   constructor(public chatsRepository: ChatsRepository) {}
 
-  async createOneToOneChat(
-    senderId: string,
-    recipientId: string,
-    firstMessage: string
-  ) {
+  async createOneToOneChat(senderId: string, recipientId: string) {
     const wasChatCreated = await this.chatsRepository.createOneToOneChat(
       senderId,
-      recipientId,
-      firstMessage
+      recipientId
     );
     return wasChatCreated;
   }

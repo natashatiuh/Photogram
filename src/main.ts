@@ -6,6 +6,7 @@ import { router as authController } from "../src/auth/authController";
 import { router as usersController } from "../src/users/usersController";
 import { router as photosController } from "../src/photos/photosController";
 import { router as chatsController } from "../src/chats/chatsController";
+import { router as messagesController } from "./messages/messagesController";
 
 async function main() {
   const app = express();
@@ -22,6 +23,7 @@ async function main() {
   app.use("/users", usersController);
   app.use("/photos", photosController);
   app.use("/chats", chatsController);
+  app.use("messages", messagesController);
   app.use("/images", express.static("./images"));
 
   app.listen(port, () => {

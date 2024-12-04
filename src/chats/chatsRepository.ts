@@ -14,11 +14,7 @@ import { ChatEntity } from "./entities/chatEntity";
 export class ChatsRepository {
   constructor(private connection: PoolConnection) {}
 
-  async createOneToOneChat(
-    senderId: string,
-    recipientId: string,
-    firstMessage: string
-  ) {
+  async createOneToOneChat(senderId: string, recipientId: string) {
     const todayDate = new Date();
     const chatId = v4();
     const query = `
@@ -33,14 +29,6 @@ export class ChatsRepository {
     if (isChatExist)
       throw new Error("The chat between users is already exist!");
     const params = [chatId, "one-to-one", senderId, recipientId, todayDate];
-    const addingFirstMessage = await this.addFirstMessage(
-      chatId,
-      senderId,
-      firstMessage,
-      todayDate
-    );
-
-    if (!addingFirstMessage) throw new Error("First message wasn't added!");
 
     const [rows] = await this.connection.execute(query, params);
     const resultSetHeader = rows as ResultSetHeader;
@@ -60,25 +48,6 @@ export class ChatsRepository {
       params
     );
     if (rows.length === 0) return false;
-    return true;
-  }
-
-  async addFirstMessage(
-    chatId: string,
-    senderId: string,
-    textContent: string,
-    sendAt: Date
-  ) {
-    const messageId = v4();
-    const query = `
-        INSERT INTO messages (id, chatId, senderId, type, textContent, sendAt)
-        VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    const params = [messageId, chatId, senderId, "text", textContent, sendAt];
-
-    const [rows] = await this.connection.execute(query, params);
-    const resultSetHeader = rows as ResultSetHeader;
-    if (resultSetHeader.affectedRows === 0) return false;
     return true;
   }
 
@@ -160,7 +129,6 @@ export class ChatsRepository {
           chat.createdAt
         )
     );
-    console.log(userChats);
     return userChats;
   }
 

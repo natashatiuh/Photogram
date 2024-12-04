@@ -43,11 +43,10 @@ router.post(
         const chatsRepository = new ChatsRepository(connection);
         const chatsService = new ChatsService(chatsRepository);
 
-        const { recipientId, firstMessage } = req.body;
+        const { recipientId } = req.body;
         const wasChatCreated = await chatsService.createOneToOneChat(
           (req as MyRequest).userId,
-          recipientId,
-          firstMessage
+          recipientId
         );
         if (!wasChatCreated) {
           res.json({ success: false });

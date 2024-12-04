@@ -61,7 +61,7 @@ describe("Chats Service", () => {
     );
     const { userId: userId1 } = await authService.signUpUser(userData1);
     const { userId: userId2 } = await authService.signUpUser(userData2);
-    await chatsService.createOneToOneChat(userId1, userId2, "Hello user2!");
+    await chatsService.createOneToOneChat(userId1, userId2);
     const user1Chats = await chatsService.getUserOneToOneChats(userId1);
     const user2Chats = await chatsService.getUserOneToOneChats(userId2);
 
@@ -89,14 +89,14 @@ describe("Chats Service", () => {
     );
     const { userId: userId1 } = await authService.signUpUser(userData1);
     const { userId: userId2 } = await authService.signUpUser(userData2);
-    await chatsService.createOneToOneChat(userId1, userId2, "Hello user2!");
+    await chatsService.createOneToOneChat(userId1, userId2);
     const user1Chats = await chatsService.getUserOneToOneChats(userId1);
     const user2Chats = await chatsService.getUserOneToOneChats(userId2);
 
     expect(user1Chats.length).toEqual(1);
     expect(user2Chats.length).toEqual(1);
     await expect(
-      chatsService.createOneToOneChat(userId2, userId1, "Hello user1!")
+      chatsService.createOneToOneChat(userId2, userId1)
     ).rejects.toThrow("The chat between users is already exist!");
   });
 
@@ -415,7 +415,7 @@ describe("Chats Service", () => {
     const { userId: userId1 } = await authService.signUpUser(userData1);
     const { userId: userId2 } = await authService.signUpUser(userData2);
 
-    await chatsService.createOneToOneChat(userId1, userId2, "Hello");
+    await chatsService.createOneToOneChat(userId1, userId2);
     await chatsService.createGroupChat("Hello", userId1);
     const [chat1] = await chatsService.getUserGroupChats(userId1);
     if (chat1 === undefined) throw new Error("ChatId shouldn't be undefined!");

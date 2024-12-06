@@ -45,7 +45,7 @@ describe("Messages Service", () => {
     return messagesService;
   }
 
-  test("text message should be added", async () => {
+  test("text message should be added (one-to-one chat)", async () => {
     const authService = await createAuthService();
     const chatsService = await createChatsService();
     const messagesService = await createMessageService();
@@ -81,5 +81,90 @@ describe("Messages Service", () => {
 
     expect(messages.length).toEqual(1);
     expect(messages[0]?.textContent).toEqual("User2, I send it to you!");
+  });
+
+  test("text message should be added (group chat)", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+    const messagesService = await createMessageService();
+
+    const userData1 = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user2@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createGroupChat("Group Chat", userId1);
+    const [chat] = await chatsService.getAllChats(userId1);
+    if (chat === undefined) throw new Error("The user hasn't got any chats!");
+    await chatsService.addParticipantToChat(chat.id, userId2, userId1);
+
+    await messagesService.sendTextMessage(
+      chat.id,
+      userId1,
+      "User1, this message for you!"
+    );
+
+    const messages = await messagesService.getAllChatMessages(chat.id, userId1);
+
+    expect(messages.length).toEqual(1);
+  });
+
+  test("message should be unsended", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+    const messagesService = await createMessageService();
+
+    const userData1 = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user2@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createOneToOneChat(userId1, userId2);
+    const [chat] = await chatsService.getAllChats(userId1);
+    if (chat === undefined) throw new Error("Chat shouldn't be undefined!");
+
+    await messagesService.sendTextMessage(
+      chat.id,
+      userId1,
+      "User2, I send it to you!"
+    );
+    await messagesService.sendTextMessage(chat.id, userId1, "I send one more");
+
+    const messages = await messagesService.getAllChatMessages(chat.id, userId2);
+    if (messages[0] === undefined)
+      throw new Error("Messages shouldn't be undefined!");
+    await messagesService.unsendMessage(messages[0]?.id, userId1);
+
+    const updatedMessages = await messagesService.getAllChatMessages(
+      chat.id,
+      userId1
+    );
+
+    expect(messages.length).toEqual(2);
+    expect(updatedMessages.length).toEqual(1);
   });
 });

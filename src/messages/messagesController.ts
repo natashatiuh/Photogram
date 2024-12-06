@@ -7,6 +7,7 @@ import { MessagesRepository } from "./messagesRepository";
 import { MessagesService } from "./messagesService";
 import { MyRequest } from "../common/requestDefinition";
 import { getAllChatMessagesSchema } from "./schemas/getAllChatMessagesSchema";
+import { unsendMessageSchema } from "./schemas/unsendMessageSchema";
 
 export const router = express.Router();
 
@@ -63,6 +64,34 @@ router.get(
         }
       });
       return messages;
+    } catch (error) {
+      console.log(error);
+      res.json({ success: false });
+    }
+  }
+);
+
+router.delete(
+  "/unsend-message",
+  validation(unsendMessageSchema),
+  auth(),
+  async (req, res) => {
+    try {
+      await runInTransaction(async (connection) => {
+        const messagesRepository = new MessagesRepository(connection);
+        const messagesService = new MessagesService(messagesRepository);
+
+        const { messageId } = req.body;
+        const wasMessageUnsended = await messagesService.unsendMessage(
+          messageId,
+          (req as MyRequest).userId
+        );
+        if (!wasMessageUnsended) {
+          res.json({ success: false });
+        } else {
+          res.json({ success: true });
+        }
+      });
     } catch (error) {
       console.log(error);
       res.json({ success: false });

@@ -90,7 +90,7 @@ export class MessagesRepository {
       FROM group_chats_participants
       WHERE participantId = ? AND chatId = ?
     `;
-    const params = [chatId, userId];
+    const params = [userId, chatId];
     const [rows] = await this.connection.execute<
       IGetChatParticipantsQueryResults[]
     >(query, params);
@@ -109,6 +109,18 @@ export class MessagesRepository {
       IGetOneToOneChatUsersQueryResults[]
     >(query, params);
     if (rows.length === 0) return false;
+    return true;
+  }
+
+  async unsendMessage(messageId: string, userId: string) {
+    const query = `
+      DELETE FROM messages
+      WHERE id = ? AND senderId = ?
+    `;
+    const params = [messageId, userId];
+    const [rows] = await this.connection.execute(query, params);
+    const resultSetHeader = rows as ResultSetHeader;
+    if (resultSetHeader.affectedRows === 0) return false;
     return true;
   }
 }

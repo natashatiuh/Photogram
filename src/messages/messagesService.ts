@@ -19,4 +19,12 @@ export class MessagesService {
     );
     return messages;
   }
+
+  async unsendMessage(messageId: string, userId: string) {
+    const wasMessageUnsended = await this.messagesRepository.unsendMessage(
+      messageId,
+      userId
+    );
+    return wasMessageUnsended;
+  }
 }

@@ -80,7 +80,9 @@ CREATE TABLE `follows` (
     `textContent` varchar(255) DEFAULT NULL,
     `mediaURL` varchar(255) DEFAULT NULL,
     `sharedPostId` varchar(255) DEFAULT NULL,
-    `sentAt` datetime NOT NULL
+    `sentAt` datetime NOT NULL,
+    `read` int DEFAULT NULL,
+    `likes` int DEFAULT NULL
   )
 
   CREATE TABLE `group_chats_participants` (

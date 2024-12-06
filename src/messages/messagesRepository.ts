@@ -16,10 +16,19 @@ export class MessagesRepository {
     const type = "text";
     const todayDate = new Date();
     const query = `
-        INSERT INTO messages (id, chatId, senderId, type, textContent, sendAt) 
-        VALUES(?, ?, ?, ?, ?, ?)
+        INSERT INTO messages (id, chatId, senderId, type, textContent, sendAt, \`read\`, likes) 
+        VALUES(?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    const params = [messageId, chatId, senderId, type, textContent, todayDate];
+    const params = [
+      messageId,
+      chatId,
+      senderId,
+      type,
+      textContent,
+      todayDate,
+      0,
+      0,
+    ];
 
     const isChatExist = await this.checkIfChatExists(chatId);
     if (!isChatExist)
@@ -48,7 +57,7 @@ export class MessagesRepository {
 
   async getAllChatMessages(chatId: string, userId: string) {
     const query = `
-      SELECT id, chatId, senderId, type, textContent, mediaUrl, sharedPostId, sendAt
+      SELECT id, chatId, senderId, type, textContent, mediaUrl, sharedPostId, sendAt, \`read\`, likes
       FROM messages
       WHERE chatId = ? 
     `;
@@ -75,6 +84,8 @@ export class MessagesRepository {
           message.senderId,
           message.type,
           message.sendAt,
+          message.read,
+          message.likes,
           message.textContent,
           message.mediaUrl,
           message.sharedPostId

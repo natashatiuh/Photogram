@@ -4,6 +4,8 @@ export class AllMessagesEntity {
   senderId: string;
   type: string;
   sendAt: Date;
+  read: number;
+  likes: number;
   textContent?: string;
   mediaUrl?: string;
   sharedPostId?: string;
@@ -14,6 +16,8 @@ export class AllMessagesEntity {
     senderId: string,
     type: string,
     sendAt: Date,
+    read: number,
+    likes: number,
     textContent?: string,
     mediaUrl?: string,
     sharedPostId?: string
@@ -23,6 +27,8 @@ export class AllMessagesEntity {
     this.senderId = senderId;
     this.type = type;
     this.sendAt = sendAt;
+    this.read = read;
+    this.likes = likes;
     this.textContent = textContent;
     this.mediaUrl = mediaUrl;
     this.sharedPostId = sharedPostId;

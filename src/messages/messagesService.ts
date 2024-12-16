@@ -27,4 +27,9 @@ export class MessagesService {
     );
     return wasMessageUnsended;
   }
+
+  async editTextMessage(messageId: string, newMessage: string, userId: string) {
+    const wasTextMessageEdited = await this.messagesRepository.editTextMessage(messageId, newMessage, userId)
+    return wasTextMessageEdited
+  }
 }

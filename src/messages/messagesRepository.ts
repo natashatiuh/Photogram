@@ -134,4 +134,17 @@ export class MessagesRepository {
     if (resultSetHeader.affectedRows === 0) return false;
     return true;
   }
+
+  async editTextMessage(messageId: string, newMessage: string, userId: string) {
+    const query = `
+      UPDATE messages 
+      SET textContent = ?
+      WHERE id = ? AND type = ? AND senderId = ?
+    `
+    const params = [newMessage, messageId, "text", userId]
+    const [rows] = await this.connection.execute(query, params)
+    const resultSetHeader = rows as ResultSetHeader
+    if (resultSetHeader.affectedRows === 0) return false
+    return true
+  }
 }

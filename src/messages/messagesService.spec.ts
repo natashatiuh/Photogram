@@ -167,4 +167,49 @@ describe("Messages Service", () => {
     expect(messages.length).toEqual(2);
     expect(updatedMessages.length).toEqual(1);
   });
+
+  test("message should be edited", async () => {
+    const authService = await createAuthService()
+    const chatsService = await createChatsService()
+    const messagesService = await createMessageService()
+
+    const userData1 = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user2@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createOneToOneChat(userId1, userId2);
+    const [chat] = await chatsService.getAllChats(userId1);
+    if (chat === undefined) throw new Error("Chat shouldn't be undefined!");
+
+    await messagesService.sendTextMessage(
+      chat.id,
+      userId1,
+      "User2, I send it to you!"
+    );
+    await messagesService.sendTextMessage(chat.id, userId1, "I send one more");
+
+    const messages = await messagesService.getAllChatMessages(chat.id, userId2);
+    if (messages[0] === undefined)
+      throw new Error("Messages shouldn't be undefined!");
+    await messagesService.editTextMessage(messages[0].id, "This is an edited message!", userId1)
+
+    const editedMessages = await messagesService.getAllChatMessages(chat.id, userId1)
+    if (editedMessages[0] === undefined) throw new Error("Message shouldn't be undefined!")
+     
+    expect(messages[0].textContent).toEqual("User2, I send it to you!")
+    expect(editedMessages[0].textContent).toEqual("This is an edited message!")
+  })
 });

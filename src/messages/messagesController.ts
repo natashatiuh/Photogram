@@ -8,6 +8,7 @@ import { MessagesService } from "./messagesService";
 import { MyRequest } from "../common/requestDefinition";
 import { getAllChatMessagesSchema } from "./schemas/getAllChatMessagesSchema";
 import { unsendMessageSchema } from "./schemas/unsendMessageSchema";
+import { editTextMessageSchema } from "./schemas/editTextMessageSchema";
 
 export const router = express.Router();
 
@@ -98,3 +99,23 @@ router.delete(
     }
   }
 );
+
+router.patch("/text-message", validation(editTextMessageSchema), auth(), async (req, res) => {
+  try {
+    await runInTransaction(async (connection) => {
+      const messagesRepository = new MessagesRepository(connection)
+      const messagesService = new MessagesService(messagesRepository)
+
+      const { messageId, newMessage } = req.body
+      const wasTextMessageEdited = await messagesService.editTextMessage(messageId, newMessage, (req as MyRequest).userId)
+      if (!wasTextMessageEdited) {
+        res.json({ success: false })
+      } else {
+        res.json({ success: true })
+      }
+    })
+  } catch (error) {
+    console.log(error)
+    res.json({ success: false })
+  }
+})

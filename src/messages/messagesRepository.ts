@@ -16,7 +16,7 @@ export class MessagesRepository {
     const type = "text";
     const todayDate = new Date();
     const query = `
-        INSERT INTO messages (id, chatId, senderId, type, textContent, sendAt, \`read\`, likes) 
+        INSERT INTO messages (id, chatId, senderId, type, textContent, sentAt, \`read\`, likes) 
         VALUES(?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const params = [
@@ -57,7 +57,7 @@ export class MessagesRepository {
 
   async getAllChatMessages(chatId: string, userId: string) {
     const query = `
-      SELECT id, chatId, senderId, type, textContent, mediaUrl, sharedPostId, sendAt, \`read\`, likes
+      SELECT id, chatId, senderId, type, textContent, mediaUrl, sharedPostId, sentAt, \`read\`, likes
       FROM messages
       WHERE chatId = ? 
     `;
@@ -83,7 +83,7 @@ export class MessagesRepository {
           message.chatId,
           message.senderId,
           message.type,
-          message.sendAt,
+          message.sentAt,
           message.read,
           message.likes,
           message.textContent,

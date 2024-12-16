@@ -3,7 +3,7 @@ export class AllMessagesEntity {
   chatId: string;
   senderId: string;
   type: string;
-  sendAt: Date;
+  sentAt: Date;
   read: number;
   likes: number;
   textContent?: string;
@@ -15,7 +15,7 @@ export class AllMessagesEntity {
     chatId: string,
     senderId: string,
     type: string,
-    sendAt: Date,
+    sentAt: Date,
     read: number,
     likes: number,
     textContent?: string,
@@ -26,7 +26,7 @@ export class AllMessagesEntity {
     this.chatId = chatId;
     this.senderId = senderId;
     this.type = type;
-    this.sendAt = sendAt;
+    this.sentAt = sentAt;
     this.read = read;
     this.likes = likes;
     this.textContent = textContent;

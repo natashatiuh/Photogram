@@ -12,7 +12,7 @@ export interface IGetAllMessageQueryResults extends RowDataPacket {
   textContent?: string;
   mediaUrl?: string;
   sharedPostId?: string;
-  sendAt: Date;
+  sentAt: Date;
 }
 
 export interface IGetChatParticipantsQueryResults extends RowDataPacket {

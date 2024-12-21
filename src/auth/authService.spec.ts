@@ -44,8 +44,7 @@ describe("Auth Service", () => {
         const usersService = await createUsersService()
         const userData = new SignUpUserInput("marta@gmail.com", "12345678", "marta23", "Martochka", new Date("2002-03-03"))
 
-        const tokens = await authService.signUpUser(userData)
-        const userId = await authService.verifyToken(tokens.accessToken)
+        const {userId: userId} = await authService.signUpUser(userData)
         const authCredentials = await authService.getAuthCredentials(userId)
         const userInfo = await usersService.getUserInfo(userId)
 
@@ -56,7 +55,6 @@ describe("Auth Service", () => {
 
     test("new user can't be created with the email which is already used", async () => {
         const authService = await createAuthService()
-        const usersService = await createUsersService()
         const userData1 = new SignUpUserInput("marta@gmail.com", "12345678", "marta23", "Martochka", new Date("2002-03-03"))
         const userData2 = new SignUpUserInput("marta@gmail.com", "12345678", "marta24", "Martochka24", new Date("2002-03-03"))
 
@@ -127,8 +125,7 @@ describe("Auth Service", () => {
         const authService = await createAuthService()
         const userData = new SignUpUserInput("loona@gmail.com", "12121212", "loona_loona", "Loona", new Date("1996-08-14"))
 
-        const tokens = await authService.signUpUser(userData)
-        const userId = await authService.verifyToken(tokens.accessToken)
+        const { userId: userId } = await authService.signUpUser(userData)
         const authCredentials = await authService.getAuthCredentials(userId)
         await authService.changeEmail(userId, "12loona@gmail.com")
         const updatedAuthCredentials = await authService.getAuthCredentials(userId)
@@ -141,8 +138,7 @@ describe("Auth Service", () => {
         const authService = await createAuthService()
         const userData = new SignUpUserInput("micky@gmail.com", "12121212", "micky123", "MickyMouse", new Date("2006-08-14"))
 
-        const tokens = await authService.signUpUser(userData)
-        const userId = await authService.verifyToken(tokens.accessToken)
+        const { userId: userId } = await authService.signUpUser(userData)
         await authService.changePassword(userId, "12121212", "11111111")    
         const updatedAuthCredentials = await authService.getAuthCredentials(userId)
 
@@ -185,8 +181,7 @@ describe("Auth Service", () => {
         const usersService = await createUsersService()
         const userData = new SignUpUserInput("lola@gmail.com", "12121212", "lolita", "Lolita Lola", new Date("2000-08-14"))
 
-        const tokens = await authService.signUpUser(userData)
-        const userId = await authService.verifyToken(tokens.accessToken)
+        const { userId: userId } = await authService.signUpUser(userData)
         const userInfo = await usersService.getUserInfo(userId)
         await authService.deleteUser(userId)
     

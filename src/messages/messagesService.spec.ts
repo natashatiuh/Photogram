@@ -121,6 +121,22 @@ describe("Messages Service", () => {
     expect(messages.length).toEqual(1);
   });
 
+  test("text message shouldn't be added", async () => {
+    const authService = await createAuthService();
+    const messagesService = await createMessageService();
+
+    const userData1 = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    
+    await expect(messagesService.sendTextMessage("chatId", userId1, "Message")).rejects.toThrow("Chat doesn't exist! Create a chat first!")
+  })
+
   test("message should be unsended", async () => {
     const authService = await createAuthService();
     const chatsService = await createChatsService();
@@ -211,5 +227,39 @@ describe("Messages Service", () => {
      
     expect(messages[0].textContent).toEqual("User2, I send it to you!")
     expect(editedMessages[0].textContent).toEqual("This is an edited message!")
+  })
+
+  test("user shouldn't gets messages, he is not in the chat", async () => {
+    const authService = await createAuthService()
+    const chatsService = await createChatsService()
+    const messagesService = await createMessageService()
+
+    const userData1 = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user2@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createGroupChat("Chat1", userId1)
+    await chatsService.createGroupChat("Chat2", userId2)
+    const [chat1] = await chatsService.getAllChats(userId1)
+    const [chat2] = await chatsService.getAllChats(userId2)
+    if (chat1 === undefined) throw new Error("Chat shouldn't be undefined!")
+    if (chat2 === undefined) throw new Error("Chat shouldn't be undefined!")
+    await messagesService.sendTextMessage(chat1.id, userId1, "hello")
+
+    await expect(messagesService.getAllChatMessages(chat1.id, userId2)).rejects.toThrow("User is NOT the chat's participant!")
+    await expect(messagesService.getAllChatMessages(chat2.id, userId2)).rejects.toThrow("There are no messages in the chat!")
   })
 });

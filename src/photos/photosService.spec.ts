@@ -57,8 +57,7 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokens = await authService.signUpUser(userData);
-    const userId = await authService.verifyToken(tokens.accessToken);
+    const {userId: userId} = await authService.signUpUser(userData);
     await photosService.addPhoto(userId, "beautiful photo", "photo here");
     await photosService.addPhoto(userId, "description", "photo2");
     const userPhotos = await photosService.getAllUserPhotos(userId);
@@ -78,8 +77,7 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokens = await authService.signUpUser(userData);
-    const userId = await authService.verifyToken(tokens.accessToken);
+    const {userId: userId} = await authService.signUpUser(userData);
     await photosService.addPhoto(userId, "beautiful photo", "photo here");
     await photosService.addPhoto(userId, "description", "photo2");
     const user = await usersService.getUserInfo(userId);
@@ -98,8 +96,7 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokens = await authService.signUpUser(userData);
-    const userId = await authService.verifyToken(tokens.accessToken);
+    const { userId: userId } = await authService.signUpUser(userData);
     await photosService.addPhoto(userId, "something here", "photo1");
     const photo = await photosService.getAllUserPhotos(userId);
     await photosService.changePhotoDescription(
@@ -124,8 +121,7 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokens = await authService.signUpUser(userData);
-    const userId = await authService.verifyToken(tokens.accessToken);
+    const { userId: userId } = await authService.signUpUser(userData);
     await photosService.addPhoto(userId, "description1", "photo1");
     await photosService.addPhoto(userId, "description2", "photo2");
     await photosService.archivePhoto("photo2", userId);
@@ -146,8 +142,7 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokens = await authService.signUpUser(userData);
-    const userId = await authService.verifyToken(tokens.accessToken);
+    const {userId: userId} = await authService.signUpUser(userData);
     await photosService.addPhoto(userId, "description1", "photo1");
     await photosService.addPhoto(userId, "description2", "photo2");
     await photosService.archivePhoto("photo1", userId);
@@ -170,8 +165,7 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokens = await authService.signUpUser(userData);
-    const userId = await authService.verifyToken(tokens.accessToken);
+    const {userId: userId} = await authService.signUpUser(userData);
     await photosService.addPhoto(userId, "description", "photo1");
     await photosService.addPhoto(userId, "description", "photo2");
     await photosService.addPhoto(userId, "description", "photo3");
@@ -197,8 +191,7 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokens = await authService.signUpUser(userData);
-    const userId = await authService.verifyToken(tokens.accessToken);
+    const {userId: userId} = await authService.signUpUser(userData);
     await photosService.addPhoto(userId, "description", "photo1");
     await photosService.addPhoto(userId, "description", "photo2");
     await photosService.addPhoto(userId, "description", "photo3");
@@ -232,10 +225,8 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokensOne = await authService.signUpUser(userDataOne);
-    const tokensTwo = await authService.signUpUser(userDataTwo);
-    const userIdOne = await authService.verifyToken(tokensOne.accessToken);
-    const userIdTwo = await authService.verifyToken(tokensTwo.accessToken);
+    const {userId: userIdOne} = await authService.signUpUser(userDataOne);
+    const {userId: userIdTwo} = await authService.signUpUser(userDataTwo);
     await photosService.addPhoto(userIdOne, "description", "photo1");
     await photosService.likePhoto("photo1", userIdOne);
     await photosService.likePhoto("photo1", userIdTwo);
@@ -264,10 +255,8 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokensOne = await authService.signUpUser(userDataOne);
-    const tokensTwo = await authService.signUpUser(userDataTwo);
-    const userIdOne = await authService.verifyToken(tokensOne.accessToken);
-    const userIdTwo = await authService.verifyToken(tokensTwo.accessToken);
+    const {userId: userIdOne} = await authService.signUpUser(userDataOne);;
+    const {userId: userIdTwo} = await authService.signUpUser(userDataTwo);
     await photosService.addPhoto(userIdOne, "description", "photo1");
     await photosService.likePhoto("photo1", userIdOne);
     await photosService.likePhoto("photo1", userIdTwo);
@@ -304,12 +293,9 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokensOne = await authService.signUpUser(userDataOne);
-    const tokensTwo = await authService.signUpUser(userDataTwo);
-    const tokensThree = await authService.signUpUser(userDataThree);
-    const userIdOne = await authService.verifyToken(tokensOne.accessToken);
-    const userIdTwo = await authService.verifyToken(tokensTwo.accessToken);
-    const userIdThree = await authService.verifyToken(tokensThree.accessToken);
+    const {userId: userIdOne} = await authService.signUpUser(userDataOne);;
+    const {userId: userIdTwo} = await authService.signUpUser(userDataTwo);
+    const {userId: userIdThree} = await authService.signUpUser(userDataThree);
 
     await photosService.addPhoto(userIdOne, "description", "photo1");
     await photosService.markUserOnThePhoto("photo1", userIdOne, userIdTwo);
@@ -346,12 +332,9 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokensOne = await authService.signUpUser(userDataOne);
-    const tokensTwo = await authService.signUpUser(userDataTwo);
-    const tokensThree = await authService.signUpUser(userDataThree);
-    const userIdOne = await authService.verifyToken(tokensOne.accessToken);
-    const userIdTwo = await authService.verifyToken(tokensTwo.accessToken);
-    const userIdThree = await authService.verifyToken(tokensThree.accessToken);
+    const {userId: userIdOne} = await authService.signUpUser(userDataOne);;
+    const {userId: userIdTwo} = await authService.signUpUser(userDataTwo);
+    const {userId: userIdThree} = await authService.signUpUser(userDataThree);;
 
     await photosService.addPhoto(userIdOne, "description", "photo1");
     await photosService.markUserOnThePhoto("photo1", userIdOne, userIdTwo);
@@ -393,12 +376,9 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokensOne = await authService.signUpUser(userDataOne);
-    const tokensTwo = await authService.signUpUser(userDataTwo);
-    const tokensThree = await authService.signUpUser(userDataThree);
-    const userIdOne = await authService.verifyToken(tokensOne.accessToken);
-    const userIdTwo = await authService.verifyToken(tokensTwo.accessToken);
-    const userIdThree = await authService.verifyToken(tokensThree.accessToken);
+    const {userId: userIdOne} = await authService.signUpUser(userDataOne);;
+    const {userId: userIdTwo} = await authService.signUpUser(userDataTwo);
+    const {userId: userIdThree} = await authService.signUpUser(userDataThree);
 
     await photosService.addPhoto(userIdOne, "description", "photo1");
     await photosService.markUserOnThePhoto("photo1", userIdOne, userIdTwo);
@@ -429,8 +409,7 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokens = await authService.signUpUser(userData);
-    const userId = await authService.verifyToken(tokens.accessToken);
+    const {userId: userId} = await authService.signUpUser(userData);
     await photosService.addPhoto(userId, "photo here", "photo1");
     await photosService.addPhoto(userId, "another photo", "photo2");
     await photosService.addPhoto(userId, "and another photo", "photo3");
@@ -451,8 +430,7 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokens = await authService.signUpUser(userData);
-    const userId = await authService.verifyToken(tokens.accessToken);
+    const {userId: userId} = await authService.signUpUser(userData);
     await photosService.addPhoto(userId, "photo here", "photo1");
     await photosService.addPhoto(userId, "another photo", "photo2");
     await photosService.addPhoto(userId, "and another photo", "photo3");
@@ -473,8 +451,7 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokens = await authService.signUpUser(userData);
-    const userId = await authService.verifyToken(tokens.accessToken);
+    const {userId: userId} = await authService.signUpUser(userData);
     await photosService.addPhoto(userId, "photo here", "photo1");
     await photosService.addPhoto(userId, "another photo", "photo2");
     await photosService.addPhoto(userId, "and another photo", "photo3");
@@ -498,8 +475,7 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokens = await authService.signUpUser(userData);
-    const userId = await authService.verifyToken(tokens.accessToken);
+    const {userId: userId} = await authService.signUpUser(userData);
     await photosService.addPhoto(userId, "photo here", "photo1");
     await photosService.addPhoto(userId, "another photo", "photo2");
     await photosService.addPhoto(userId, "and another photo", "photo3");
@@ -534,12 +510,9 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokensOne = await authService.signUpUser(userDataOne);
-    const tokensTwo = await authService.signUpUser(userDataTwo);
-    const tokensThree = await authService.signUpUser(userDataThree);
-    const userIdOne = await authService.verifyToken(tokensOne.accessToken);
-    const userIdTwo = await authService.verifyToken(tokensTwo.accessToken);
-    const userIdThree = await authService.verifyToken(tokensThree.accessToken);
+    const {userId: userIdOne} = await authService.signUpUser(userDataOne);
+    const {userId: userIdTwo} = await authService.signUpUser(userDataTwo);
+    const {userId: userIdThree} = await authService.signUpUser(userDataThree);
 
     await photosService.addPhoto(userIdOne, "description", "photo1");
     await photosService.savePhoto("photo1", userIdOne);
@@ -571,8 +544,8 @@ describe("Photos Service", () => {
       new Date("2000-08-14")
     );
 
-    const tokensOne = await authService.signUpUser(userDataOne);
-    const userIdOne = await authService.verifyToken(tokensOne.accessToken);
+    const {userId: userIdOne} = await authService.signUpUser(userDataOne);
+    const {userId: userIdTwo} = await authService.signUpUser(userDataTwo);
     const photoId = "photo1";
     await photosService.addPhoto(userIdOne, "description", photoId);
     await photosService.viewPhoto(photoId);
@@ -581,4 +554,75 @@ describe("Photos Service", () => {
 
     expect(photoViews).toEqual(2);
   });
+
+  test("user should not have any photos", async () => {
+    const authService = await createAuthService()
+    const photosService = await createPhotosService()
+
+    const userData = new SignUpUserInput(
+      "rocky@gmail.com",
+      "12121212",
+      "rocky",
+      "Rocky",
+      new Date("2000-08-14")
+    );
+    const {userId: userId} = await authService.signUpUser(userData)
+
+    await expect(photosService.getAllUserPhotos(userId)).rejects.toThrow("User has NO photos!")
+  })
+
+  test("user should not have any saved content", async () => {
+    const authService = await createAuthService()
+    const photosService = await createPhotosService()
+
+    const userData = new SignUpUserInput(
+      "rocky@gmail.com",
+      "12121212",
+      "rocky",
+      "Rocky",
+      new Date("2000-08-14")
+    );
+    const {userId: userId} = await authService.signUpUser(userData)
+    await photosService.addPhoto(userId, "photo is here", "photo1")
+
+    await expect(photosService.getAllUserSavedContent(userId)).rejects.toThrow("User has NO saved content!")
+  })
+
+  test("photo should not have any likes", async () => {
+    const authService = await createAuthService()
+    const photosService = await createPhotosService()
+
+    const userData = new SignUpUserInput(
+      "rocky@gmail.com",
+      "12121212",
+      "rocky",
+      "Rocky",
+      new Date("2000-08-14")
+    );
+    const {userId: userId} = await authService.signUpUser(userData)
+    await photosService.addPhoto(userId, "photo is here", "photo1")
+    const photo = await photosService.getAllUserPhotos(userId)
+    if (photo[0] === undefined) throw new Error("Photo shouldn't be undefined!")
+
+    await expect(photosService.getAllPhotoLikes(photo[0]?.id)).rejects.toThrow("Photo has NO likes!")
+  })
+
+  test("photo should not have any markedUsers", async () => {
+    const authService = await createAuthService()
+    const photosService = await createPhotosService()
+
+    const userData = new SignUpUserInput(
+      "rocky@gmail.com",
+      "12121212",
+      "rocky",
+      "Rocky",
+      new Date("2000-08-14")
+    );
+    const {userId: userId} = await authService.signUpUser(userData)
+    await photosService.addPhoto(userId, "photo is here", "photo1")
+    const photo = await photosService.getAllUserPhotos(userId)
+    if (photo[0] === undefined) throw new Error("Photo shouldn't be undefined!")
+
+    await expect(photosService.getUsersMarkedInPhoto(photo[0].id)).rejects.toThrow("The photo has NO marked users!")
+  })
 });

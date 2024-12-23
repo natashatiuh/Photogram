@@ -17,6 +17,7 @@ export class UsersRepository {
             WHERE id = ?
         `
         const params = [newUserName, userId]
+        if (newUserName.length === 0) throw new Error("Username can't be blank!")
 
         const [rows] = await this.connection.execute(query, params)
         const resultSetHeader = rows as ResultSetHeader
@@ -31,6 +32,7 @@ export class UsersRepository {
             WHERE id = ?
         `
         const params = [newUserFullName, userId]
+        if (newUserFullName.length === 0) throw new Error("User fullname can't be blank!")
 
         const [rows] = await this.connection.execute(query, params)
         const resultSetHeader = rows as ResultSetHeader
@@ -45,11 +47,30 @@ export class UsersRepository {
             WHERE id = ?
         `
         const params = [newDate, userId]
+
+        const userAge = await this.getUserAge(newDate)
+        if (userAge < 13) throw new Error("User must be at least 13 years old to sign up.");
+
         const [rows] = await this.connection.execute(query, params)
         const resultSetHeader = rows as ResultSetHeader
         if (resultSetHeader.affectedRows === 0) return false
         return true
     }
+
+    async getUserAge(dateOfBirth: Date) {
+        const today = new Date();
+        let age = today.getFullYear() - dateOfBirth.getFullYear();
+        const monthDifference = today.getMonth() - dateOfBirth.getMonth();
+    
+        if (
+          monthDifference < 0 ||
+          (monthDifference === 0 && today.getDate() < dateOfBirth.getDate())
+        ) {
+          age--;
+        }
+    
+        return age;
+      }
 
     async addAvatar(userId: string, avatar?: string) {
         const query = `

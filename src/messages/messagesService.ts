@@ -32,4 +32,9 @@ export class MessagesService {
     const wasTextMessageEdited = await this.messagesRepository.editTextMessage(messageId, newMessage, userId)
     return wasTextMessageEdited
   }
+
+  async readMessage(messageId: string, userId: string) {
+    const wasMessageRead = await this.messagesRepository.readMessage(messageId, userId)
+    return wasMessageRead
+  }
 }

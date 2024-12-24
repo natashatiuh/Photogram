@@ -262,4 +262,109 @@ describe("Messages Service", () => {
     await expect(messagesService.getAllChatMessages(chat1.id, userId2)).rejects.toThrow("User is NOT the chat's participant!")
     await expect(messagesService.getAllChatMessages(chat2.id, userId2)).rejects.toThrow("There are no messages in the chat!")
   })
+
+  test("message should be read", async () => {
+    const authService = await createAuthService()
+    const chatsService = await createChatsService()
+    const messagesService = await createMessageService()
+
+    const userData1 = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user2@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createGroupChat("Chat1", userId1)
+    const [chat] = await chatsService.getAllChats(userId1)
+    if (chat === undefined) throw new Error("Chat shouldn't be undefined!")
+    await chatsService.addParticipantToChat(chat.id, userId2,userId1)
+
+    await messagesService.sendTextMessage(chat.id, userId1, "hello")
+    const messages = await messagesService.getAllChatMessages(chat.id, userId1)
+    if (messages[0] === undefined) throw new Error("Message shouldn;t be undefined!")
+    const wasMessageRead = await messagesService.readMessage(messages[0]?.id, userId2)
+    const updatedMessages = await messagesService.getAllChatMessages(chat.id, userId1)
+    if (updatedMessages[0] === undefined) throw new Error("Message shouldn't be undefined!")
+
+    expect(wasMessageRead).toEqual(true)
+    expect(updatedMessages[0].read).toEqual(1)
+  })
+
+  test("message shouldn't be read by message sender", async () => {
+    const authService = await createAuthService()
+    const chatsService = await createChatsService()
+    const messagesService = await createMessageService()
+
+    const userData1 = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user2@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createGroupChat("Chat1", userId1)
+    const [chat] = await chatsService.getAllChats(userId1)
+    if (chat === undefined) throw new Error("Chat shouldn't be undefined!")
+    await chatsService.addParticipantToChat(chat.id, userId2,userId1)
+
+    await messagesService.sendTextMessage(chat.id, userId1, "hello")
+    const messages = await messagesService.getAllChatMessages(chat.id, userId1)
+    if (messages[0] === undefined) throw new Error("Message shouldn;t be undefined!")
+    
+    await expect (messagesService.readMessage(messages[0]?.id, userId1)).rejects.toThrow("Message sender has already read its own message!")
+  })
+
+  test("message shouldn't be read", async() => {
+    const authService = await createAuthService()
+    const chatsService = await createChatsService()
+    const messagesService = await createMessageService()
+
+    const userData1 = new SignUpUserInput(
+      "user1@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user2@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createGroupChat("Chat1", userId1)
+    const [chat] = await chatsService.getAllChats(userId1)
+    if (chat === undefined) throw new Error("Chat shouldn't be undefined!")
+
+    await messagesService.sendTextMessage(chat.id, userId1, "hello")
+    const messages = await messagesService.getAllChatMessages(chat.id, userId1)
+    if (messages[0] === undefined) throw new Error("Message shouldn;t be undefined!")
+
+    await expect (messagesService.readMessage(messages[0]?.id, userId2)).rejects.toThrow("User is not chat participant. It can't read the message!")
+  })
 });

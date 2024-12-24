@@ -23,3 +23,8 @@ export interface IGetOneToOneChatUsersQueryResults extends RowDataPacket {
   user1: string;
   user2: string;
 }
+
+
+export interface IGetMessageIdQueryResults extends RowDataPacket {
+  messageId: string
+}

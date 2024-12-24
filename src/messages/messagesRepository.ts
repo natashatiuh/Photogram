@@ -4,6 +4,7 @@ import {
   IGetAllMessageQueryResults,
   IGetChatIdQueryResults,
   IGetChatParticipantsQueryResults,
+  IGetMessageIdQueryResults,
   IGetOneToOneChatUsersQueryResults,
 } from "./interfaces";
 import { AllMessagesEntity } from "./entities/allMessagesEntity";
@@ -146,5 +147,61 @@ export class MessagesRepository {
     const resultSetHeader = rows as ResultSetHeader
     if (resultSetHeader.affectedRows === 0) return false
     return true
+  }
+
+  async readMessage(messageId: string, userId: string) {
+    const chatId = await this.getChatId(messageId)
+    const isUserChatParticipant = await this.checkIfUserChatParticipant(chatId, userId)
+    const isUserMessageSender = await this.checkIfUserNotMessageSender(messageId, userId)
+    const query  = `
+      UPDATE messages
+      SET \`read\` = \`read\` + 1
+      WHERE id = ?
+    `
+    const params = [messageId]
+    if (!isUserChatParticipant) throw new Error("User is not chat participant. It can't read the message!")
+    if(isUserMessageSender) throw new Error("Message sender has already read its own message!")
+    
+    const [rows] = await this.connection.execute(query, params)
+    const resultSetHeader = rows as ResultSetHeader
+    if (resultSetHeader.affectedRows === 0) return false
+    return true
+  } 
+
+  async checkIfUserChatParticipant(chatId: string, userId: string) {
+    const query = `
+      SELECT participantId
+      FROM group_chats_participants
+      WHERE chatId = ? AND participantId = ?
+    `
+    const params = [chatId, userId]
+    const [rows] = await this.connection.execute<IGetChatParticipantsQueryResults[]>(query, params)
+    if (rows.length === 0) return false
+    return true
+  }
+
+  async checkIfUserNotMessageSender(messageId: string, userId: string) {
+    const query = `
+      SELECT id
+      FROM messages
+      WHERE id = ? AND senderId = ?
+    `
+    const params = [messageId, userId]
+    const [rows] = await this.connection.execute<IGetMessageIdQueryResults[]>(query, params)
+    if (rows.length === 0) return false
+    return true
+  }
+
+  async getChatId(messageId: string) {
+    const query = `
+      SELECT chatId 
+      FROM messages 
+      WHERE id = ?
+    `
+    const params = [messageId]
+    const [rows] = await this.connection.execute<IGetChatIdQueryResults[]>(query, params)
+    if (rows.length === 0) throw new Error("Message doesn't exist!")
+    if (rows[0]?.chatId === undefined) throw new Error("ChatId doesn't exist for this message!")  
+    return rows[0]?.chatId
   }
 }

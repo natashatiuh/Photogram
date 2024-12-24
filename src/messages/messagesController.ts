@@ -9,6 +9,7 @@ import { MyRequest } from "../common/requestDefinition";
 import { getAllChatMessagesSchema } from "./schemas/getAllChatMessagesSchema";
 import { unsendMessageSchema } from "./schemas/unsendMessageSchema";
 import { editTextMessageSchema } from "./schemas/editTextMessageSchema";
+import { readMessageSchema } from "./schemas/readMessageSchema";
 
 export const router = express.Router();
 
@@ -109,6 +110,26 @@ router.patch("/text-message", validation(editTextMessageSchema), auth(), async (
       const { messageId, newMessage } = req.body
       const wasTextMessageEdited = await messagesService.editTextMessage(messageId, newMessage, (req as MyRequest).userId)
       if (!wasTextMessageEdited) {
+        res.json({ success: false })
+      } else {
+        res.json({ success: true })
+      }
+    })
+  } catch (error) {
+    console.log(error)
+    res.json({ success: false })
+  }
+})
+
+router.patch("/read-message", validation(readMessageSchema), auth(), async (req, res) => {
+  try {
+    await runInTransaction(async (connection) => {
+      const messagesRepository = new MessagesRepository(connection)
+      const messagesService = new MessagesService(messagesRepository)
+
+      const { messageId } = req.body
+      const wasMessageRead = await messagesService.readMessage(messageId, (req as MyRequest).userId)
+      if (!wasMessageRead) {
         res.json({ success: false })
       } else {
         res.json({ success: true })

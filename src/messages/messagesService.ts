@@ -37,4 +37,14 @@ export class MessagesService {
     const wasMessageRead = await this.messagesRepository.readMessage(messageId, userId)
     return wasMessageRead
   }
+
+  async likeMessage(messageId: string, userId: string) {
+    const wasMessagedLiked = await this.messagesRepository.likeMessage(messageId, userId)
+    return wasMessagedLiked
+  }
+
+  async getMessageLikes(messageId: string, userId: string) {
+    const messageLikes = await this.messagesRepository.getMessageLikes(messageId, userId)
+    return messageLikes
+  }
 }

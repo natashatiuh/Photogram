@@ -25,6 +25,7 @@ describe("Messages Service", () => {
     await connection.query("TRUNCATE chats");
     await connection.query("TRUNCATE messages");
     await connection.query("TRUNCATE group_chats_participants");
+    await connection.query("TRUNCATE messages_likes");
   });
 
   async function createAuthService() {
@@ -365,6 +366,209 @@ describe("Messages Service", () => {
     const messages = await messagesService.getAllChatMessages(chat.id, userId1)
     if (messages[0] === undefined) throw new Error("Message shouldn;t be undefined!")
 
-    await expect (messagesService.readMessage(messages[0]?.id, userId2)).rejects.toThrow("User is not chat participant. It can't read the message!")
+    await expect (messagesService.readMessage(messages[0]?.id, userId2)).rejects.toThrow("User is NOT the chat's participant!")
+  })
+
+  test("message should be liked", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+    const messagesService = await createMessageService();
+
+    const userData1 = new SignUpUserInput(
+      "user16@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user26@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createOneToOneChat(userId1, userId2);
+    const [chat] = await chatsService.getAllChats(userId1);
+    if (chat === undefined) throw new Error("Chat shouldn't be undefined!");
+
+    await messagesService.sendTextMessage(
+      chat.id,
+      userId1,
+      "User2, I send it to you!"
+    );
+    const messages = await messagesService.getAllChatMessages(chat.id, userId2);
+    if (messages[0] === undefined) throw new Error("Message can't be undefined!")
+
+    const wasMessageLiked = await messagesService.likeMessage(messages[0].id, userId2)
+    const updatedMessages = await messagesService.getAllChatMessages(chat.id, userId2);
+    if (updatedMessages[0] === undefined) throw new Error("Message can't be undefined!")
+
+    expect(wasMessageLiked).toEqual(true)
+    expect(updatedMessages[0].likes).toEqual(1)
+  })
+
+  test("message shouldn't be liked", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+    const messagesService = await createMessageService();
+
+    const userData1 = new SignUpUserInput(
+      "user16@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user26@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createGroupChat("Group chat", userId1)
+    const chats = await chatsService.getAllChats(userId1)
+    if (chats[0] === undefined) throw new Error("Chat can't be undefined!")
+    const chatId = chats[0].id
+
+    await messagesService.sendTextMessage(chatId, userId1, "Hello")
+    const messages = await messagesService.getAllChatMessages(chatId, userId1);
+    if (messages[0] === undefined) throw new Error("Message can't be undefined!")
+    const messageId = messages[0].id
+    const messageLikes = await messagesService.getMessageLikes(messageId, userId1)
+
+    await expect (messagesService.likeMessage(messageId, userId2)).rejects.toThrow("User is NOT the chat's participant!")
+    expect(messageLikes.length).toEqual(0)
+  })
+
+  test("message shouldn't be liked", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+    const messagesService = await createMessageService();
+
+    const userData1 = new SignUpUserInput(
+      "user16@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user26@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createOneToOneChat(userId1, userId1);
+    const [chat] = await chatsService.getAllChats(userId1);
+    if (chat === undefined) throw new Error("Chat shouldn't be undefined!");
+    const chatId = chat.id
+
+    await messagesService.sendTextMessage(
+      chatId,
+      userId1,
+      "User, I send it to you!"
+    );
+    const [message] = await messagesService.getAllChatMessages(chatId, userId1);
+    if (message === undefined) throw new Error("Message can't be undefined!")
+    const messageId = message.id
+    const messageLikes = await messagesService.getMessageLikes(messageId, userId1)
+
+    await expect (messagesService.likeMessage(messageId, userId2)).rejects.toThrow("User is NOT the chat's participant!")
+    expect(messageLikes.length).toEqual(0)
+  })
+
+  test ("message shouldn't be liked", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+    const messagesService = await createMessageService();
+
+    const userData1 = new SignUpUserInput(
+      "user16@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user26@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createOneToOneChat(userId1, userId2);
+    const [chat] = await chatsService.getAllChats(userId1);
+    if (chat === undefined) throw new Error("Chat shouldn't be undefined!");
+
+    await messagesService.sendTextMessage(
+      chat.id,
+      userId1,
+      "User2, I send it to you!"
+    );
+    const [message] = await messagesService.getAllChatMessages(chat.id, userId2);
+    if (message === undefined) throw new Error("Message can't be undefined!")
+    const messageId = message.id
+    await messagesService.likeMessage(messageId, userId2)
+    const messageLikes = await messagesService.getMessageLikes(messageId, userId1)
+    
+    await expect (messagesService.likeMessage(messageId, userId2)).rejects.toThrow("Message was already liked by this user!")
+    expect(messageLikes.length).toEqual(1)
+  })
+
+  test("like should be added", async () => {
+    const authService = await createAuthService();
+    const chatsService = await createChatsService();
+    const messagesService = await createMessageService();
+
+    const userData1 = new SignUpUserInput(
+      "user16@gmail.com",
+      "11111111",
+      "user1",
+      "User1",
+      new Date("2002-03-16")
+    );
+    const userData2 = new SignUpUserInput(
+      "user26@gmail.com",
+      "11111111",
+      "user2",
+      "User2",
+      new Date("2002-03-16")
+    );
+    const { userId: userId1 } = await authService.signUpUser(userData1);
+    const { userId: userId2 } = await authService.signUpUser(userData2);
+
+    await chatsService.createOneToOneChat(userId1, userId2);
+    const [chat] = await chatsService.getAllChats(userId1);
+    if (chat === undefined) throw new Error("Chat shouldn't be undefined!");
+
+    await messagesService.sendTextMessage(
+      chat.id,
+      userId1,
+      "User2, I send it to you!"
+    );
+    const [message] = await messagesService.getAllChatMessages(chat.id, userId2);
+    if (message === undefined) throw new Error("Message can't be undefined!")
+    const messageId = message.id
+
+    const wasLikeAdded = await messagesService.likeMessage(messageId, userId2)
+    const messageLikes = await messagesService.getMessageLikes(messageId, userId2)
+    
+    expect(wasLikeAdded).toEqual(true)
+    expect(messageLikes.length).toEqual(1)
   })
 });

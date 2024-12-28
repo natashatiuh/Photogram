@@ -287,7 +287,7 @@ export class PhotosRepository {
     const todayDate = new Date();
 
     const query = `
-            INSERT INTO likes (id, postId, likedBy, date) 
+            INSERT INTO photos_likes (id, postId, likedBy, date) 
             VALUES (?, ?, ?, ?)
         `;
     const params = [id, photoId, userId, todayDate];
@@ -299,7 +299,7 @@ export class PhotosRepository {
 
   async checkUserLike(photoId: string, userId: string) {
     const query = `
-            SELECT id, postId, likedBy FROM likes
+            SELECT id, postId, likedBy FROM photos_likes
             WHERE postId = ? AND likedBy = ?
         `;
     const params = [photoId, userId];
@@ -330,7 +330,7 @@ export class PhotosRepository {
 
   async deleteLikeFromLikes(photoId: string, userId: string) {
     const query = `
-            DELETE FROM likes
+            DELETE FROM photos_likes
             WHERE postId = ? AND likedBy = ?
         `;
     const params = [photoId, userId];
@@ -343,7 +343,7 @@ export class PhotosRepository {
   async getAllPhotoLikes(photoId: string) {
     const query = `
             SELECT id, postId, likedBy
-            FROM likes
+            FROM photos_likes
             WHERE postId = ?
         `;
     const params = [photoId];

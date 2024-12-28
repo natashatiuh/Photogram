@@ -4,10 +4,13 @@ import {
   IGetAllMessageQueryResults,
   IGetChatIdQueryResults,
   IGetChatParticipantsQueryResults,
+  IGetLikeIdQueryResults,
   IGetMessageIdQueryResults,
+  IGetMessageLikesQueryResults,
   IGetOneToOneChatUsersQueryResults,
 } from "./interfaces";
 import { AllMessagesEntity } from "./entities/allMessagesEntity";
+import { MessagesLikesEntity } from "./entities/messagesLikesEntity";
 
 export class MessagesRepository {
   constructor(private connection: PoolConnection) {}
@@ -151,15 +154,19 @@ export class MessagesRepository {
 
   async readMessage(messageId: string, userId: string) {
     const chatId = await this.getChatId(messageId)
-    const isUserChatParticipant = await this.checkIfUserChatParticipant(chatId, userId)
+    const isGroupChatParticipant =
+      await this.checkIfUserIsAGroupChatParticipant(chatId, userId);
+    const isOneToOneChatParticipant =
+      await this.checkIfUserIsOneToOneChatParticipant(chatId, userId);
     const isUserMessageSender = await this.checkIfUserNotMessageSender(messageId, userId)
     const query  = `
       UPDATE messages
-      SET \`read\` = \`read\` + 1
+      SET \`read\` = true
       WHERE id = ?
     `
     const params = [messageId]
-    if (!isUserChatParticipant) throw new Error("User is not chat participant. It can't read the message!")
+    if (!isGroupChatParticipant && !isOneToOneChatParticipant)
+      throw new Error("User is NOT the chat's participant!");
     if(isUserMessageSender) throw new Error("Message sender has already read its own message!")
     
     const [rows] = await this.connection.execute(query, params)
@@ -167,18 +174,6 @@ export class MessagesRepository {
     if (resultSetHeader.affectedRows === 0) return false
     return true
   } 
-
-  async checkIfUserChatParticipant(chatId: string, userId: string) {
-    const query = `
-      SELECT participantId
-      FROM group_chats_participants
-      WHERE chatId = ? AND participantId = ?
-    `
-    const params = [chatId, userId]
-    const [rows] = await this.connection.execute<IGetChatParticipantsQueryResults[]>(query, params)
-    if (rows.length === 0) return false
-    return true
-  }
 
   async checkIfUserNotMessageSender(messageId: string, userId: string) {
     const query = `
@@ -203,5 +198,84 @@ export class MessagesRepository {
     if (rows.length === 0) throw new Error("Message doesn't exist!")
     if (rows[0]?.chatId === undefined) throw new Error("ChatId doesn't exist for this message!")  
     return rows[0]?.chatId
+  }
+
+  async likeMessage(messageId: string, userId: string) {
+    const chatId = await this.getChatId(messageId)
+    const isGroupChatParticipant =
+      await this.checkIfUserIsAGroupChatParticipant(chatId, userId);
+    const isOneToOneChatParticipant =
+      await this.checkIfUserIsOneToOneChatParticipant(chatId, userId);
+    const isMessageLiked = await this.checkIfMessageWasLiked(messageId, userId)
+    const wasLikeAdded = await this.addMessageLike(messageId, userId)
+    const query = `
+      UPDATE messages
+      SET likes = likes + 1
+      WHERE id = ?
+    ` 
+    const params = [messageId]
+    if (!isGroupChatParticipant && !isOneToOneChatParticipant)
+      throw new Error("User is NOT the chat's participant!");
+    if(isMessageLiked) throw new Error("Message was already liked by this user!")
+    if(!wasLikeAdded) throw new Error("Like wasn't added")
+
+    const [rows] = await this.connection.execute(query, params)
+    const resultSetHeader = rows as ResultSetHeader
+    if (resultSetHeader.affectedRows === 0) return false
+    return true
+  }
+
+  async addMessageLike(messageId: string, userId: string) {
+    const likeId = v4()
+    const query = `
+      INSERT INTO messages_likes
+      (id, messageId, likedBy)
+      VALUES (?, ?, ?)
+    `
+    const params = [likeId, messageId, userId]
+    const [rows] = await this.connection.execute(query, params)
+    const resultSetHeader = rows as ResultSetHeader
+    if (resultSetHeader.affectedRows === 0) return false
+    return true
+  }
+
+  async checkIfMessageWasLiked(messageId: string, userId: string) {
+    const query = `
+      SELECT id
+      FROM messages_likes
+      WHERE messageId = ? AND likedBy = ?
+    `
+    const params = [messageId, userId]
+    const [rows] = await this.connection.execute<IGetLikeIdQueryResults[]>(query, params)
+    if (rows.length === 0) return false
+    return true
+  }
+
+  async getMessageLikes(messageId: string, userId: string) {
+    const chatId = await this.getChatId(messageId)
+    const isGroupChatParticipant =
+      await this.checkIfUserIsAGroupChatParticipant(chatId, userId);
+    const isOneToOneChatParticipant =
+      await this.checkIfUserIsOneToOneChatParticipant(chatId, userId);
+    const query = `
+      SELECT id, messageId, likedBy
+      FROM messages_likes
+      WHERE messageId = ?
+    `
+    const params = [messageId]
+
+    if (!isGroupChatParticipant && !isOneToOneChatParticipant)
+      throw new Error("User is NOT the chat's participant!");
+
+    const [likes] = await this.connection.execute<IGetMessageLikesQueryResults[]>(query, params)
+    const messageLikes = likes.map(
+          (like) =>
+            new MessagesLikesEntity(
+              like.id,
+              like.messageId,
+              like.likedBy,
+            )
+        );
+        return messageLikes;
   }
 }

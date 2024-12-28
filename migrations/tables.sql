@@ -42,7 +42,7 @@ CREATE TABLE `follows` (
   `followDate` datetime NOT NULL
 );
 
-CREATE TABLE `likes` (
+CREATE TABLE `photos_likes` (
   `id` varchar(255) NOT NULL,
   `postId` varchar(255) NOT NULL,
   `likedBy` varchar(255) NOT NULL,
@@ -99,3 +99,9 @@ CREATE TABLE `saved_posts` (
   `saverId` varchar(255) NOT NULL,
   UNIQUE KEY `id` (`id`)
 );
+
+CREATE TABLE `messages_likes` (
+  `id` varchar(255) NOT NULL,
+  `messageId` varchar(255) NOT NULL,
+  `likedBy` varchar(255) NOT NULL
+)

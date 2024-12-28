@@ -43,3 +43,4 @@ export interface IGetArchivedQueryResult extends RowDataPacket {
 export interface IGetViewsQueryResults extends RowDataPacket {
   views: number;
 }
+

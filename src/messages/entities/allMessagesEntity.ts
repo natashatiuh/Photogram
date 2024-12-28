@@ -4,7 +4,7 @@ export class AllMessagesEntity {
   senderId: string;
   type: string;
   sentAt: Date;
-  read: number;
+  read: boolean;
   likes: number;
   textContent?: string;
   mediaUrl?: string;
@@ -16,7 +16,7 @@ export class AllMessagesEntity {
     senderId: string,
     type: string,
     sentAt: Date,
-    read: number,
+    read: boolean,
     likes: number,
     textContent?: string,
     mediaUrl?: string,

@@ -10,6 +10,8 @@ import { getAllChatMessagesSchema } from "./schemas/getAllChatMessagesSchema";
 import { unsendMessageSchema } from "./schemas/unsendMessageSchema";
 import { editTextMessageSchema } from "./schemas/editTextMessageSchema";
 import { readMessageSchema } from "./schemas/readMessageSchema";
+import { likeMessageSchema } from "./schemas/likeMessageSchema";
+import { getMessageLikesSchema } from "./schemas/getMessageLikesSchema";
 
 export const router = express.Router();
 
@@ -135,6 +137,47 @@ router.patch("/read-message", validation(readMessageSchema), auth(), async (req,
         res.json({ success: true })
       }
     })
+  } catch (error) {
+    console.log(error)
+    res.json({ success: false })
+  }
+})
+
+router.patch("/like-message", validation(likeMessageSchema), auth(), async (req, res) => {
+  try {
+    await runInTransaction(async (connection) => {
+      const messagesRepository = new MessagesRepository(connection)
+      const messagesService = new MessagesService(messagesRepository)
+
+      const { messageId } = req.body
+      const wasMessageLiked = await messagesService.likeMessage(messageId, (req as MyRequest).userId)
+      if (!wasMessageLiked) {
+        res.json({ success: false })
+      } else {
+        res.json({ success: true })
+      }
+    })
+  } catch (error) {
+    console.log(error)
+    res.json({ success: false })
+  }
+})
+
+router.get("/get-likes", validation(getMessageLikesSchema), auth(), async (req, res) => {
+  try {
+    const messageLikes = await runInTransaction(async (connection) => {
+      const messagesRepository = new MessagesRepository(connection)
+      const messagesService = new MessagesService(messagesRepository)
+
+      const { messageId } = req.body
+      const messageLikes = await messagesService.getMessageLikes(messageId, (req as MyRequest).userId)
+      if (!messageLikes) {
+        res.json({ success: false })
+      } else {
+        res.json({messageLikes})
+      }
+    })
+    return messageLikes
   } catch (error) {
     console.log(error)
     res.json({ success: false })

@@ -28,3 +28,13 @@ export interface IGetOneToOneChatUsersQueryResults extends RowDataPacket {
 export interface IGetMessageIdQueryResults extends RowDataPacket {
   messageId: string
 }
+
+export interface IGetLikeIdQueryResults extends RowDataPacket {
+  likeId: string
+}
+
+export interface IGetMessageLikesQueryResults extends RowDataPacket {
+  id: string,
+  messageId: string,
+  likedBy: string
+}
